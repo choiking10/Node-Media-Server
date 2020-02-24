@@ -3,6 +3,7 @@
 //  illuspas[a]gmail.com
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
+const research_utils = require("./research_utils");
 
 const QueryString = require("querystring");
 const AV = require("./node_core_av");
@@ -242,14 +243,14 @@ class NodeRtmpSession {
     while (bytes > 0) {
       switch (this.handshakeState) {
         case RTMP_HANDSHAKE_UNINIT:
-          // Logger.log('RTMP_HANDSHAKE_UNINIT');
+          Logger.log('RTMP_HANDSHAKE_UNINIT');
           this.handshakeState = RTMP_HANDSHAKE_0;
           this.handshakeBytes = 0;
           bytes -= 1;
           p += 1;
           break;
         case RTMP_HANDSHAKE_0:
-          // Logger.log('RTMP_HANDSHAKE_0');
+          Logger.log('RTMP_HANDSHAKE_0');
           n = RTMP_HANDSHAKE_SIZE - this.handshakeBytes;
           n = n <= bytes ? n : bytes;
           data.copy(this.handshakePayload, this.handshakeBytes, p, p + n);
@@ -264,7 +265,7 @@ class NodeRtmpSession {
           }
           break;
         case RTMP_HANDSHAKE_1:
-          // Logger.log('RTMP_HANDSHAKE_1');
+          Logger.log('RTMP_HANDSHAKE_1');
           n = RTMP_HANDSHAKE_SIZE - this.handshakeBytes;
           n = n <= bytes ? n : bytes;
           data.copy(this.handshakePayload, this.handshakeBytes, p, n);
@@ -279,7 +280,7 @@ class NodeRtmpSession {
           break;
         case RTMP_HANDSHAKE_2:
         default:
-          // Logger.log('RTMP_HANDSHAKE_2');
+         // Logger.log('RTMP_HANDSHAKE_2');
           return this.rtmpChunkRead(data, p, bytes);
       }
     }
@@ -635,9 +636,9 @@ class NodeRtmpSession {
     packet.payload = payload;
     packet.header.length = packet.payload.length;
     packet.header.timestamp = this.parserPacket.clock;
+
     let rtmpChunks = this.rtmpChunksCreate(packet);
     let flvTag = NodeFlvSession.createFlvTag(packet);
-
     //cache gop
     if (this.rtmpGopCacheQueue != null) {
       if (this.aacSequenceHeader != null && payload[1] === 0) {
@@ -729,6 +730,8 @@ class NodeRtmpSession {
         this.flvGopCacheQueue.add(flvTag);
       }
     }
+
+    research_utils.appendLog(packet.header.timestamp);
 
     // Logger.log(rtmpChunks);
     for (let playerId of this.players) {

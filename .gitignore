@@ -31,3 +31,9 @@ node_modules
 *.ts
 *.mp4
 *.mpd
+text.txt
+.idea/vcs.xml
+.idea/modules.xml
+.idea/misc.xml
+.idea/Node-Media-Server.iml
+.idea/.gitignore

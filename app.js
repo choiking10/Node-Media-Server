@@ -27,6 +27,18 @@ const config = {
     publish: false,
     secret: 'nodemedia2017privatekey'
   },
+  trans: {
+    ffmpeg: 'D:\\Download\\ffmpeg-20200131-62d92a8-win64-static\\bin\\ffmpeg.exe',
+    tasks: [
+      {
+        app: 'live',
+        hls: true,
+        hlsFlags: '[hls_time=1:hls_list_size=3]',
+        dash: true,
+        dashFlags: '[f=dash:window_size=1:extra_window_size=3]'
+      }
+    ]
+  }
 };
 
 
