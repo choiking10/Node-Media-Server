@@ -382,6 +382,7 @@ class NodeRtmpSession {
 
     let size = 0;
     let offset = 0;
+    let bef = 0;
     let extended_timestamp = 0;
 
     while (offset < bytes) {
