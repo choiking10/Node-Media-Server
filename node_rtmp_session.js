@@ -454,12 +454,17 @@ class NodeRtmpSession {
             this.parserPacket.bytes = 0;
             if (this.parserPacket.clock > 0xffffffff) {
               //TODO Shit code, rewrite chunkcreate
-              break;
+
+              research_utils.appendLog([this.id, offset-bef, bytes], "bytes.log");
+              bef = offset;              break;
             }
             this.rtmpHandler();
           } else if (0 === this.parserPacket.bytes % this.inChunkSize) {
             this.parserState = RTMP_PARSE_INIT;
           }
+          research_utils.appendLog([this.id, offset-bef, bytes], "bytes.log");
+          bef = offset;
+
           break;
       }
     }
