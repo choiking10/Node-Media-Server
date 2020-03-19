@@ -37,3 +37,5 @@ text.txt
 .idea/misc.xml
 .idea/Node-Media-Server.iml
 .idea/.gitignore
+.idea/inspectionProfiles/Project_Default.xml
+media/
