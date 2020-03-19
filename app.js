@@ -26,7 +26,11 @@ const config = {
     play: false,
     publish: false,
     secret: 'nodemedia2017privatekey'
-  },
+  }
+};
+
+/*
+,
   trans: {
     ffmpeg: 'D:\\Download\\ffmpeg-20200131-62d92a8-win64-static\\bin\\ffmpeg.exe',
     tasks: [
@@ -39,8 +43,8 @@ const config = {
       }
     ]
   }
-};
 
+ */
 
 let nms = new NodeMediaServer(config)
 nms.run();
