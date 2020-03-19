@@ -4,6 +4,7 @@
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 const research_utils = require("./research_utils");
+const MP4Box = require('mp4box'); // Or whatever import method you prefer.
 
 const QueryString = require("querystring");
 const AV = require("./node_core_av");
@@ -174,6 +175,10 @@ class NodeRtmpSession {
     this.players = new Set();
     this.numPlayCache = 0;
     context.sessions.set(this.id, this);
+
+    this.headerHandler = null;
+    this.change_header = true;
+    this.tmp_packet_queue = [];
   }
 
   run() {
@@ -378,17 +383,15 @@ class NodeRtmpSession {
   }
 
   rtmpChunkRead(data, p, bytes) {
-    // Logger.log('rtmpChunkRead', p, bytes);
 
     let size = 0;
     let offset = 0;
     let extended_timestamp = 0;
-
+    let bef = 0;
     while (offset < bytes) {
       switch (this.parserState) {
         case RTMP_PARSE_INIT:
-          this.parserBytes = 1;
-          this.parserBuffer[0] = data[p + offset++];
+          this.parserBytes = 1;          this.parserBuffer[0] = data[p + offset++];
           if (0 === (this.parserBuffer[0] & 0x3f)) {
             this.parserBasicBytes = 2;
           } else if (1 === (this.parserBuffer[0] & 0x3f)) {
@@ -446,6 +449,7 @@ class NodeRtmpSession {
           if (size > 0) {
             data.copy(this.parserPacket.payload, this.parserPacket.bytes, p + offset, p + offset + size);
           }
+
           this.parserPacket.bytes += size;
           offset += size;
 
@@ -630,6 +634,7 @@ class NodeRtmpSession {
     }
 
     let packet = RtmpPacket.create();
+
     packet.header.fmt = RTMP_CHUNK_TYPE_0;
     packet.header.cid = RTMP_CHANNEL_AUDIO;
     packet.header.type = RTMP_TYPE_AUDIO;
@@ -708,14 +713,17 @@ class NodeRtmpSession {
     }
 
     let packet = RtmpPacket.create();
+
     packet.header.fmt = RTMP_CHUNK_TYPE_0;
     packet.header.cid = RTMP_CHANNEL_VIDEO;
     packet.header.type = RTMP_TYPE_VIDEO;
     packet.payload = payload;
     packet.header.length = packet.payload.length;
     packet.header.timestamp = this.parserPacket.clock;
+
     let rtmpChunks = this.rtmpChunksCreate(packet);
     let flvTag = NodeFlvSession.createFlvTag(packet);
+    //this.packetReachLog.appendLog([packet.header.timestamp, "nms-server - local(reach)"]);
 
     //cache gop
     if ((codec_id == 7 || codec_id == 12) && this.rtmpGopCacheQueue != null) {
@@ -731,8 +739,6 @@ class NodeRtmpSession {
       }
     }
 
-    research_utils.appendLog(packet.header.timestamp);
-
     // Logger.log(rtmpChunks);
     for (let playerId of this.players) {
       let playerSession = context.sessions.get(playerId);
@@ -743,8 +749,9 @@ class NodeRtmpSession {
 
       if (playerSession instanceof NodeRtmpSession) {
         if (playerSession.isStarting && playerSession.isPlaying && !playerSession.isPause && playerSession.isReceiveVideo) {
-          rtmpChunks.writeUInt32LE(playerSession.playStreamId, 8);
-          playerSession.res.write(rtmpChunks);
+            rtmpChunks.writeUInt32LE(playerSession.playStreamId, 8);
+            playerSession.res.write(rtmpChunks);
+            research_utils.appendLog([packet.header.timestamp, "nms-server - local(send complete)"]);
         }
       } else if (playerSession instanceof NodeFlvSession) {
         playerSession.res.write(flvTag, null, e => {
@@ -1116,6 +1123,8 @@ class NodeRtmpSession {
     }
 
     if (publisher.videoCodec === 7 || publisher.videoCodec === 12) {
+      this.change_header = true;
+
       let packet = RtmpPacket.create();
       packet.header.fmt = RTMP_CHUNK_TYPE_0;
       packet.header.cid = RTMP_CHANNEL_VIDEO;
@@ -1125,6 +1134,35 @@ class NodeRtmpSession {
       packet.header.stream_id = this.playStreamId;
       let chunks = this.rtmpChunksCreate(packet);
       this.socket.write(chunks);
+      let this_ = this;
+
+      setInterval(() => {
+        console.log("start change fps");
+        this_.change_header = true;
+
+        let publisherId = context.publishers.get(this.playStreamPath);
+        let publisher = context.sessions.get(publisherId);
+        let packet = RtmpPacket.create();
+
+        if (publisher.headerHandler) {
+        }
+
+        packet.header.fmt = RTMP_CHUNK_TYPE_0;
+        packet.header.cid = RTMP_CHANNEL_VIDEO;
+        packet.header.type = RTMP_TYPE_VIDEO;
+        packet.payload = publisher.avcSequenceHeader;
+        packet.header.length = packet.payload.length;
+        packet.header.stream_id = this_.playStreamId;
+        packet.header.timestamp = publisher.parserPacket.clock; // ?? 0 or clock
+        let chunks = this_.rtmpChunksCreate(packet);
+        this_.socket.write(chunks);
+        setTimeout(function () {
+          this_.change_header = false;
+        }, 2000);
+      }, 100000);
+      setTimeout(function () {
+        this_.change_header = false;
+      }, 2000);
     }
 
     if (publisher.rtmpGopCacheQueue != null) {
@@ -1163,6 +1201,9 @@ class NodeRtmpSession {
           packet.header.timestamp = publisher.parserPacket.clock; // ?? 0 or clock
           let chunks = this.rtmpChunksCreate(packet);
           this.socket.write(chunks);
+          setTimeout(function () {
+            this_.change_header = false;
+          }, 200);
         }
         if (publisher.videoCodec === 7 || publisher.videoCodec === 12) {
           let packet = RtmpPacket.create();

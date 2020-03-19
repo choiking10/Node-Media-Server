@@ -4,6 +4,7 @@
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 
+const research = require('./research_utils');
 const Bitop = require('./node_core_bitop');
 const AAC_SAMPLE_RATE = [
   96000, 88200, 64000, 48000,
@@ -55,6 +56,16 @@ const VIDEO_CODEC_NAME = [
   '',
   'H265'
 ];
+
+function to_bitstring(buffer) {
+  let bitop = new Bitop(buffer);
+  let str = "";
+  for(let i = 0; i < buffer.length*8; i++){
+    str += bitop.read(1).toString();
+  }
+  return str;
+}
+
 
 function getObjectType(bitop) {
   let audioObjectType = bitop.read(5);
@@ -117,6 +128,176 @@ function getAACProfileName(info) {
   }
 }
 
+function my_test(avcSequenceHeader) {
+  let info = {};
+  let tmp = 0;
+  let profile_idc, width, height, crop_left, crop_right,
+      crop_top, crop_bottom, frame_mbs_only, n, cf_idc,
+      num_ref_frames;
+
+  var timing_info_present_flag = 0;
+  var bitop = new Bitop(avcSequenceHeader);
+  var bitstr = to_bitstring(avcSequenceHeader);
+  class CollectData {
+    constructor() {
+      this.result = [];
+    }
+    a(data, label="unknown"){
+      this.result.push([data, label]);
+      return data;
+    }
+  }
+  var collect = new CollectData();
+
+  collect.a(bitop.read(48));
+
+  info.width = 0;
+  info.height = 0;
+
+  do {
+    info.profile = collect.a(bitop.read(8), "profile");
+    info.compat = collect.a(bitop.read(8), "compat");
+    info.level = collect.a(bitop.read(8), "level");
+    info.nalu = collect.a((bitop.read(8) & 0x03) + 1, "nalu");
+    info.nb_sps = collect.a(bitop.read(8) & 0x1F, "nb_sps");
+
+    if (info.nb_sps == 0) {
+      break;
+    }
+    /* nal size */
+    collect.a(bitop.read(16), "nal size");
+
+    /* nal type */
+    if (collect.a(bitop.read(8), "nal type") != 0x67) {
+      break;
+    }
+    /* SPS */
+    profile_idc = collect.a(bitop.read(8), "profile_idc");
+    var constraint_set0_flag=bitop.read(1);//(buf[1] & 0x80)>>7;
+    var constraint_set1_flag=bitop.read(1);//(buf[1] & 0x40)>>6;
+    var constraint_set2_flag=bitop.read(1);//(buf[1] & 0x20)>>5;
+    var constraint_set3_flag=bitop.read(1);//(buf[1] & 0x10)>>4;
+    var reserved_zero_4bits=bitop.read(4);
+    var level_idc=bitop.read(8);
+
+    var seq_parameter_set_id=bitop.read_golomb();
+
+    if( profile_idc == 100 || profile_idc == 110 ||
+        profile_idc == 122 || profile_idc == 144 )
+    {
+
+      var chroma_format_idc=bitop.read_golomb();
+      if( chroma_format_idc == 3 )
+        var residual_colour_transform_flag=bitop.read(1);
+      var bit_depth_luma_minus8=bitop.read_golomb();
+      var bit_depth_chroma_minus8=bitop.read_golomb();
+      var qpprime_y_zero_transform_bypass_flag=bitop.read(1);
+      var seq_scaling_matrix_present_flag=bitop.read(1);
+
+      var seq_scaling_list_present_flag = [];
+      if( seq_scaling_matrix_present_flag )
+      {
+        for( var i = 0; i < 8; i++ ) {
+          seq_scaling_list_present_flag.push(bitop.read(1));
+        }
+      }
+    }
+    var log2_max_frame_num_minus4=bitop.read_golomb();
+    var pic_order_cnt_type=bitop.read_golomb();
+    if( pic_order_cnt_type == 0 )
+      var log2_max_pic_order_cnt_lsb_minus4=bitop.read_golomb();
+    else if( pic_order_cnt_type == 1 )
+    {
+      var delta_pic_order_always_zero_flag=bitop.read(1);
+      var offset_for_non_ref_pic=bitop.read_golomb();
+      var offset_for_top_to_bottom_field=bitop.read_golomb();
+      var num_ref_frames_in_pic_order_cnt_cycle=bitop.read_golomb();
+
+      var offset_for_ref_frame= [];
+      for( var i = 0; i < num_ref_frames_in_pic_order_cnt_cycle; i++ )
+        offset_for_ref_frame.push(bitop.read_golomb());
+    }
+    let num_ref_frames=bitop.read_golomb();
+    var gaps_in_frame_num_value_allowed_flag=bitop.read(1);
+    var pic_width_in_mbs_minus1=bitop.read_golomb();
+    var pic_height_in_map_units_minus1=bitop.read_golomb();
+
+    width=(pic_width_in_mbs_minus1+1)*16;
+    height=(pic_height_in_map_units_minus1+1)*16;
+
+    var frame_mbs_only_flag=bitop.read(1);
+    if(!frame_mbs_only_flag)
+      var mb_adaptive_frame_field_flag=bitop.read(1);
+
+    var direct_8x8_inference_flag=bitop.read(1);
+    var frame_cropping_flag=bitop.read(1);
+    if(frame_cropping_flag)
+    {
+      var frame_crop_left_offset=bitop.read_golomb();
+      var frame_crop_right_offset=bitop.read_golomb();
+      var frame_crop_top_offset=bitop.read_golomb();
+      var frame_crop_bottom_offset=bitop.read_golomb();
+    }
+    var vui_parameter_present_flag=bitop.read(1);
+    if(vui_parameter_present_flag)
+    {
+      var aspect_ratio_info_present_flag=bitop.read(1);
+      if(aspect_ratio_info_present_flag)
+      {
+        var aspect_ratio_idc=bitop.read(8);
+        if(aspect_ratio_idc==255)
+        {
+          var sar_width=bitop.read(16);
+          var sar_height=bitop.read(16);
+        }
+      }
+      var overscan_info_present_flag=bitop.read(1);
+      if(overscan_info_present_flag)
+        var overscan_appropriate_flagu=bitop.read(1);
+      var video_signal_type_present_flag=bitop.read(1);
+      if(video_signal_type_present_flag)
+      {
+        var video_format=bitop.read(3);
+        var video_full_range_flag=bitop.read(1);
+        var colour_description_present_flag=bitop.read(1);
+        if(colour_description_present_flag)
+        {
+          var colour_primaries=bitop.read(8);
+          var transfer_characteristics=bitop.read(8);
+          var matrix_coefficients=bitop.read(8);
+        }
+      }
+      var chroma_loc_info_present_flag=bitop.read(1);
+      if(chroma_loc_info_present_flag)
+      {
+        var chroma_sample_loc_type_top_field=bitop.read_golomb();
+        var chroma_sample_loc_type_bottom_field=bitop.read_golomb();
+      }
+      timing_info_present_flag=bitop.read(1);
+
+      if(timing_info_present_flag)
+      {
+        var num_units_in_tick=bitop.read(32);
+        var time_scale=bitop.read(32);
+        fps=time_scale/num_units_in_tick;
+        var fixed_frame_rate_flag=bitop.read(1);
+        if(fixed_frame_rate_flag)
+        {
+          fps=fps/2;
+        }
+      }
+    }
+
+    if(timing_info_present_flag){
+      console.log("H.264 SPS: -> video size %dx%d, %d fps, profile(%d) %s\n",
+          width, height, fps, profile_idc, getAVCProfileName(profile_idc));
+    } else {
+      console.log("H.264 SPS: -> video size %dx%d, unknown fps, profile(%d) %s\n",
+          width, height, profile_idc, getAVCProfileName(profile_idc));
+    }
+  } while (0);
+}
+
 function readH264SpecificConfig(avcSequenceHeader) {
   let info = {};
   let profile_idc, width, height, crop_left, crop_right,
@@ -126,6 +307,9 @@ function readH264SpecificConfig(avcSequenceHeader) {
   bitop.read(48);
   info.width = 0;
   info.height = 0;
+  my_test(avcSequenceHeader);
+  let h264Edit = new research.H264BitEditTools(avcSequenceHeader);
+  h264Edit.run_decoder();
 
   do {
     info.profile = bitop.read(8);
@@ -359,6 +543,7 @@ function HEVCParseSPS(SPS, hevc) {
   }
   let rbsp = Buffer.from(rbsp_array);
   let rbspBitop = new Bitop(rbsp);
+
   psps.sps_video_parameter_set_id = rbspBitop.read(4);
   psps.sps_max_sub_layers_minus1 = rbspBitop.read(3);
   psps.sps_temporal_id_nesting_flag = rbspBitop.read(1);

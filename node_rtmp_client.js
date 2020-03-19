@@ -4,7 +4,6 @@
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 
-const research_utils = require('research_utils');
 
 const EventEmitter = require('events');
 const Logger = require('./node_core_logger');
