@@ -17,10 +17,27 @@ function appendLog(data, filename="text.txt"){
     if (!Array.isArray(data)){
         data = [data]
     }
+    filename = "./log/" + filename;
     data = [getTimestamp()].concat(data).concat('\n');
     fs.appendFile(filename, data.join(','), function(err) {
-
     });
+}
+
+class CustomLogger {
+    constructor(filename, headers) {
+        this.filename = "./log/"+filename + ".csv";
+        this.header = headers;
+        fs.appendFile(filename, this.header.join(','), function(err) {
+        });
+    }
+    appendLog(data){
+        if (!Array.isArray(data)){
+            data = [data]
+        }
+        data = [getTimestamp()].concat(data).concat('\n');
+        fs.appendFile(this.filename, data.join(','), function(err) {
+        });
+    }
 }
 
 class FutureLog {
@@ -329,6 +346,7 @@ class H264BitEditTools {
 
 module.exports = {
     getTimestamp: getTimestamp,
+    CustomLogger: CustomLogger,
     appendLog: appendLog,
     FutureLog: FutureLog,
     H264BitEditTools: H264BitEditTools
