@@ -4,7 +4,7 @@
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 
-const research_utils = require('research_utils');
+const research_utils = require('./research_utils');
 
 const EventEmitter = require('events');
 const Logger = require('./node_core_logger');
@@ -108,8 +108,19 @@ const RtmpPacket = {
 };
 
 class NodeRtmpClient {
-  constructor(rtmpUrl) {
+  constructor(rtmpUrl, connection_id="no_id") {
     this.url = rtmpUrl;
+    this.connection_id = connection_id;
+    this.packetLogger = new research_utils.CustomLogger(connection_id, [
+      "id",
+      "header.cid",
+      "header.stream_id",
+      "header.length",
+      "clock",
+      "bytes",
+      "offset-bef",
+      "receive_bytes",
+    ]);
     this.info = this.rtmpUrlParser(rtmpUrl);
     this.isPublish = false;
     this.launcher = new EventEmitter();
@@ -391,6 +402,7 @@ class NodeRtmpClient {
     let size = 0;
     let offset = 0;
     let extended_timestamp = 0;
+    let bef = 0;
 
     while (offset < bytes) {
       switch (this.parserState) {
@@ -456,6 +468,18 @@ class NodeRtmpClient {
           this.parserPacket.bytes += size;
           offset += size;
 
+          this.packetLogger.appendLog(
+              [
+                this.connection_id,
+                this.parserPacket.header.cid,
+                this.parserPacket.header.stream_id,
+                this.parserPacket.header.length,
+                this.parserPacket.clock,
+                this.parserPacket.bytes,
+                offset-bef,
+                bytes,
+              ]);
+          bef = offset;
           if (this.parserPacket.bytes >= this.parserPacket.header.length) {
             this.parserState = RTMP_PARSE_INIT;
             this.parserPacket.bytes = 0;

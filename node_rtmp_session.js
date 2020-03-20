@@ -108,6 +108,16 @@ class NodeRtmpSession {
     this.socket = socket;
     this.res = socket;
     this.id = NodeCoreUtils.generateNewSessionID();
+    this.packetLogger = new research_utils.CustomLogger(this.id, [
+      "id",
+      "header.cid",
+      "header.stream_id",
+      "header.length",
+      "clock",
+      "bytes",
+      "offset-bef",
+      "receive_bytes",
+    ]);
     this.ip = socket.remoteAddress;
     this.TAG = "rtmp";
 
@@ -450,21 +460,31 @@ class NodeRtmpSession {
           this.parserPacket.bytes += size;
           offset += size;
 
+          this.packetLogger.appendLog(
+              [
+                this.id,
+                this.parserPacket.header.cid,
+                this.parserPacket.header.stream_id,
+                this.parserPacket.header.length,
+                this.parserPacket.clock,
+                this.parserPacket.bytes,
+                offset-bef,
+                bytes,
+              ]);
+          bef = offset;
+
           if (this.parserPacket.bytes >= this.parserPacket.header.length) {
             this.parserState = RTMP_PARSE_INIT;
             this.parserPacket.bytes = 0;
             if (this.parserPacket.clock > 0xffffffff) {
               //TODO Shit code, rewrite chunkcreate
 
-              research_utils.appendLog([this.id, offset-bef, bytes], "bytes.log");
-              bef = offset;              break;
+              break;
             }
             this.rtmpHandler();
           } else if (0 === this.parserPacket.bytes % this.inChunkSize) {
             this.parserState = RTMP_PARSE_INIT;
           }
-          research_utils.appendLog([this.id, offset-bef, bytes], "bytes.log");
-          bef = offset;
 
           break;
       }
