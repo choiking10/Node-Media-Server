@@ -282,7 +282,6 @@ class NodeRtmpClient {
     packet.header.timestamp = timestamp;
     let rtmpChunks = this.rtmpChunksCreate(packet);
     this.socket.write(rtmpChunks);
-    console.log(timestamp)
   }
 
   pushScript(scriptData, timestamp) {
