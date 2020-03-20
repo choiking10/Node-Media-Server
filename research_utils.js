@@ -13,11 +13,11 @@ function getTimestamp() {
     return date + '/' + month + '/' + year + ' ' + hour + ':' + min + ':' + sec + " " + ptime.getMilliseconds();
 }
 
-function appendLog(data, filename="text.txt"){
+function appendLog(data, filename="text"){
     if (!Array.isArray(data)){
         data = [data]
     }
-    filename = "./log/" + filename;
+    filename = "./log/" + filename + ".csv";
     data = [getTimestamp()].concat(data).concat('\n');
     fs.appendFile(filename, data.join(','), function(err) {
     });
@@ -25,7 +25,7 @@ function appendLog(data, filename="text.txt"){
 
 class CustomLogger {
     constructor(filename, headers) {
-        this.filename = "./log/"+filename + ".csv";
+        this.filename = "./log/" + filename + ".csv";
         this.header = headers;
         fs.appendFile(filename, this.header.join(','), function(err) {
         });

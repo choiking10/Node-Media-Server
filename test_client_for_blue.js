@@ -17,23 +17,25 @@ let publish_to_earth = new NodeRtmpClient('rtmp://' +
 
 
 rtmp_polling_client.on('video', (videoData, timestamp) => {
-    publish_to_jupiter.pushVideo(videoData, timestamp);
     research_utils.appendLog(['jupiter', timestamp, videoData.length], "blue_publish.csv");
-    publish_to_earth.pushVideo(videoData, timestamp);
+    publish_to_jupiter.pushVideo(videoData, timestamp);
     research_utils.appendLog(['earth', timestamp, videoData.length], "blue_publish.csv");
+    publish_to_earth.pushVideo(videoData, timestamp);
     //rtmp_pushing_to_server_client.pushVideo(videoData, timestamp);
 });
 
 async function run_rtmp_polling_client() {
     rtmp_polling_client.startPull();
+    console.log("rtmp_polling_client start");
 }
 
-async function run_publush(publish_client) {
+async function run_publush(publish_client, tag) {
     publish_client.startPush();
+    console.log(tag + "publish start");
 }
 
-run_publush(publish_to_earth);
-run_publush(publish_to_jupiter);
+run_publush(publish_to_earth, "earth");
+run_publush(publish_to_jupiter, "jupiter");
 run_rtmp_polling_client();
 
 // rtmp://143.248.55.86:31935/live/wins
