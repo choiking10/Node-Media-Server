@@ -1,4 +1,6 @@
-const NodeMediaServer = require('./');
+
+const EDGE_JUPITER_IP = "10.0.10.1";
+const EDGE_EARTH_IP = "10.0.20.1";
 
 const NodeRtmpClient = require('./node_rtmp_client');
 const research_utils = require('./research_utils');
@@ -7,9 +9,14 @@ const poll_addr = "127.0.0.1";
 const push_addr = "143.248.55.86";
 const stream_key = "wins";
 
-let rtmp_polling_client = new NodeRtmpClient(
-    'rtmp://' + poll_addr + '/live/' + stream_key,
-    "my_id"
+let pull_jupiter = new NodeRtmpClient(
+    'rtmp://' + EDGE_JUPITER_IP + '/live/' + stream_key,
+    "black"
+);
+
+let pull_earth = new NodeRtmpClient(
+    'rtmp://' + EDGE_EARTH_IP + '/live/' + stream_key,
+    "black"
 );
 // rtmp://143.248.55.86:31935/live/wins
 
@@ -24,16 +31,16 @@ let rtmp_polling_client = new NodeRtmpClient(
 * rtmp_polling_from_server_client
 * */
 
-rtmp_polling_client.on('video', (videoData, timestamp) => {
-    research_utils.appendLog([timestamp, 'rtmp_polling_client']);
-    //rtmp_pushing_to_server_client.pushVideo(videoData, timestamp);
-});
 
-async function run_rtmp_polling_client() {
-    rtmp_polling_client.startPull();
+async function run_pulling(pulling_client) {
+    pulling_client.startPull();
+    pulling_client.on('video', (videoData, timestamp) => {
+        research_utils.appendLog(['black', timestamp, videoData.length], "black_pulling.csv");
+    });
 }
 
-run_rtmp_polling_client();
+run_pulling(pull_earth);
+run_pulling(pull_jupiter);
 
 /*
 rtmp_polling_from_server_client.on('video', (videoData, timestamp) => {
