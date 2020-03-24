@@ -18,14 +18,15 @@ function getFileTimestamp() {
     return [ptime.getMonth(), ptime.getDate(), '_', ptime.getHours(), ptime.getMinutes()].join();
 }
 
-const start_timestamp = getFileTimestamp();
-fs.mkdir("./long/"+start_timestamp);
+const START_TIMESTAMP = getFileTimestamp();
+fs.mkdir("./log/" + START_TIMESTAMP);
+const BASE_LOG_DIR = "./log/" + START_TIMESTAMP + "/";
 
 function appendLog(data, filename="text"){
     if (!Array.isArray(data)){
         data = [data]
     }
-    filename = "./log/" + start_timestamp + "/" + filename;
+    filename = BASE_LOG_DIR + filename;
     if(!filename.endsWith("csv")){
         filename += ".csv";
     }
@@ -36,7 +37,7 @@ function appendLog(data, filename="text"){
 
 class CustomLogger {
     constructor(filename, headers) {
-        this.filename = "./log/"+start_timestamp+"/" + filename;
+        this.filename = BASE_LOG_DIR + filename;
 
         if(!this.filename.endsWith("csv")){
             this.filename  += ".csv";
