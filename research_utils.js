@@ -19,8 +19,10 @@ function getFileTimestamp() {
 }
 
 const START_TIMESTAMP = getFileTimestamp();
-fs.mkdir("./log/" + START_TIMESTAMP);
 const BASE_LOG_DIR = "./log/" + START_TIMESTAMP + "/";
+if (fs.existsSync(BASE_LOG_DIR)) {
+    fs.mkdir(BASE_LOG_DIR);
+}
 
 function appendLog(data, filename="text"){
     if (!Array.isArray(data)){
