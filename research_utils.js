@@ -15,7 +15,7 @@ function getTimestamp() {
 
 function getFileTimestamp() {
     let ptime = new Date(Date.now());
-    return [ptime.getMonth(), ptime.getDate(), '_', ptime.getHours(), ptime.getMinutes()].join('');
+    return [ptime.getMonth(), ptime.getDate(), ptime.getHours(), ptime.getMinutes()].join('_');
 }
 
 const START_TIMESTAMP = getFileTimestamp();
