@@ -13,11 +13,19 @@ function getTimestamp() {
     return date + '/' + month + '/' + year + ' ' + hour + ':' + min + ':' + sec + " " + ptime.getMilliseconds();
 }
 
+function getFileTimestamp() {
+    let ptime = new Date(Date.now());
+    return [ptime.getMonth(), ptime.getDate(), '_', ptime.getHours(), ptime.getMinutes()].join();
+}
+
+const start_timestamp = getFileTimestamp();
+fs.mkdir("./long/"+start_timestamp);
+
 function appendLog(data, filename="text"){
     if (!Array.isArray(data)){
         data = [data]
     }
-    filename = "./log/" + filename;
+    filename = "./log/" + start_timestamp + "/" + filename;
     if(!filename.endsWith("csv")){
         filename += ".csv";
     }
@@ -28,7 +36,7 @@ function appendLog(data, filename="text"){
 
 class CustomLogger {
     constructor(filename, headers) {
-        this.filename = "./log/" + filename;
+        this.filename = "./log/"+start_timestamp+"/" + filename;
 
         if(!this.filename.endsWith("csv")){
             this.filename  += ".csv";
@@ -161,6 +169,7 @@ class H264FieldManager {
         }
     }
 }
+
 
 // 참고: https://github.com/stephenyin/h264_sps_decoder/blob/master/sps.cpp
 
