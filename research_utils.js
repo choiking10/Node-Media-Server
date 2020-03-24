@@ -17,7 +17,10 @@ function appendLog(data, filename="text"){
     if (!Array.isArray(data)){
         data = [data]
     }
-    filename = "./log/" + filename + ".csv";
+    filename = "./log/" + filename;
+    if(!filename.endsWith("csv")){
+        filename += ".csv";
+    }
     data = [getTimestamp()].concat(data).concat('\n');
     fs.appendFile(filename, data.join(','), function(err) {
     });
@@ -25,7 +28,11 @@ function appendLog(data, filename="text"){
 
 class CustomLogger {
     constructor(filename, headers) {
-        this.filename = "./log/" + filename + ".csv";
+        this.filename = "./log/" + filename;
+
+        if(!this.filename.endsWith("csv")){
+            this.filename  += ".csv";
+        }
         this.header = headers;
         fs.appendFile(filename, this.header.join(','), function(err) {
         });
@@ -52,6 +59,9 @@ class FutureLog {
     appendLog(additional_data, filename="text.txt") {
         if (!Array.isArray(additional_data)){
             additional_data = [additional_data]
+        }
+        if(!filename.endsWith("csv")){
+            filename += ".csv";
         }
         this.data = this.data.concat(additional_data);
         fs.appendFile(filename, this.data.join(','), function(err) {

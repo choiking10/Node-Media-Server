@@ -17,9 +17,15 @@ let publish_to_earth = new NodeRtmpClient('rtmp://' +
 
 
 rtmp_polling_client.on('video', (videoData, timestamp) => {
-    research_utils.appendLog(['jupiter', timestamp, videoData.length], "blue_publish.csv");
+    if(videoData != null)
+        research_utils.appendLog(['jupiter', timestamp, videoData.length], "blue_publish.csv");
+    else
+        research_utils.appendLog(['jupiter', timestamp, "null"], "blue_publish.csv");
     publish_to_jupiter.pushVideo(videoData, timestamp);
-    research_utils.appendLog(['earth', timestamp, videoData.length], "blue_publish.csv");
+    if(videoData != null)
+        research_utils.appendLog(['earth', timestamp, videoData.length], "blue_publish.csv");
+    else
+        research_utils.appendLog(['earth', timestamp, "null"], "blue_publish.csv");
     publish_to_earth.pushVideo(videoData, timestamp);
     //rtmp_pushing_to_server_client.pushVideo(videoData, timestamp);
 });

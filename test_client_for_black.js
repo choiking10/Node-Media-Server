@@ -11,12 +11,12 @@ const stream_key = "wins";
 
 let pull_jupiter = new NodeRtmpClient(
     'rtmp://' + EDGE_JUPITER_IP + '/live/' + stream_key,
-    "black"
+    "black_from_jupiter"
 );
 
 let pull_earth = new NodeRtmpClient(
     'rtmp://' + EDGE_EARTH_IP + '/live/' + stream_key,
-    "black"
+    "black_from_earth"
 );
 // rtmp://143.248.55.86:31935/live/wins
 
@@ -35,7 +35,11 @@ let pull_earth = new NodeRtmpClient(
 async function run_pulling(pulling_client) {
     pulling_client.startPull();
     pulling_client.on('video', (videoData, timestamp) => {
-        research_utils.appendLog(['black', timestamp, videoData.length], "black_pulling.csv");
+        if(videoData != null)
+            research_utils.appendLog(['black', timestamp, videoData.length], "black_pulling.csv");
+        else
+            research_utils.appendLog(['black', timestamp, "null"], "black_pulling.csv");
+
     });
 }
 
