@@ -15,7 +15,8 @@ class NodeRtmpEdgeChangeClient {
         let _this = this;
         this.activeClient.on('edge_change', (ip, port) => {
             _this.readyEdgeChange(ip, port);
-            console.log(research_utils.getTimestamp() +this.connection_id + " viewer will exchange to " + [ip, port]);
+            console.log(research_utils.getTimestamp() + " " +
+                this.connection_id + " viewer will exchange to " + [ip, port]);
         });
     }
 
@@ -33,7 +34,8 @@ class NodeRtmpEdgeChangeClient {
         let _this = this;
         this.nextEdgeClient.on('edge_change', (ip, port) => {
             _this.readyEdgeChange(ip, port);
-            console.log(research_utils.getTimestamp() + this.connection_id + "viewer will exchange to " + [ip, port]);
+            console.log(research_utils.getTimestamp()  + " " +
+                this.connection_id + "viewer will exchange to " + [ip, port]);
         });
         if(this.activeClient.isPublish){
             this.nextEdgeClient.startPush();
@@ -48,10 +50,12 @@ class NodeRtmpEdgeChangeClient {
             this.nextEdgeClient.startPull();
 
         }
-        console.log(research_utils.getTimestamp() + this.connection_id + " ready to exchange to " + this.activeClient.url);
+        console.log(research_utils.getTimestamp()  + " " +
+            this.connection_id + " ready to exchange to " + this.activeClient.url);
         if (this.directStart){
             this.directStart = false;
-            console.log(research_utils.getTimestamp() + this.connection_id + "direct start!");
+            console.log(research_utils.getTimestamp()  + " " +
+                this.connection_id + "direct start!");
             this.DoEdgeChange();
         }
     }
@@ -64,9 +68,11 @@ class NodeRtmpEdgeChangeClient {
             this.nextEdgeClient.on(key, this.callback[key]);
         }
         this.activeClient.stop();
+        this.nextEdgeClient.avcSequenceHeader = this.activeClient.avcSequenceHeader;
         this.activeClient = this.nextEdgeClient;
         this.nextEdgeClient = null;
-        console.log(research_utils.getTimestamp() + this.connection_id + " exchange to " + this.activeClient.url);
+        console.log(research_utils.getTimestamp()  + " " +
+            this.connection_id + " exchange to " + this.activeClient.url);
     }
 
     pushAudio(audioData, timestamp) {
@@ -74,6 +80,19 @@ class NodeRtmpEdgeChangeClient {
     }
 
     pushVideo(videoData, timestamp) {
+        if(this.activeClient.isSendAvcSequenceHeader == false){
+            let frame_type = (videoData[0] >> 4) & 0x0f;
+            let codec_id = videoData[0] & 0x0f;
+            let is_header = false;
+            if (codec_id == 7 || codec_id == 12) {
+                //cache avc sequence header
+                if (frame_type == 1 && videoData[1] == 0) {
+                    is_header = true;
+                }
+            }
+            if(is_header)
+                this.activeClient.pushVideo(this.activeClient.avcSequenceHeader, 0);
+        }
         this.activeClient.pushVideo(videoData, timestamp);
     }
 

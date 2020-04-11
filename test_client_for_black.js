@@ -31,7 +31,8 @@ async function run_pulling(pulling_client) {
         else
             research_utils.appendLog(['black', timestamp, "null"], "black_pulling.csv");
 
-        console.log("receive video")
+        console.log(research_utils.getTimestamp() + " " +
+            this.connection_id + " I receive video (" + timestamp + ")")
     });
     pulling_client.startPull();
 }

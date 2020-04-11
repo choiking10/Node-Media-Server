@@ -12,6 +12,7 @@ const Crypto = require('crypto');
 const Url = require('url');
 const Net = require('net');
 const AMF = require('./node_core_amf');
+const AV = require("./node_core_av");
 
 const FLASHVER = "LNX 9,0,124,2";
 const RTMP_OUT_CHUNK_SIZE = 60000;
@@ -142,7 +143,10 @@ class NodeRtmpClient {
     this.outChunkSize = RTMP_CHUNK_SIZE;
 
     this.streamId = 0;
+    this.isSendAvcSequenceHeader = false;
     this.isSocketOpen = false;
+
+    this.avcSequenceHeader = null;
   }
 
   onSocketData(data) {
@@ -288,6 +292,21 @@ class NodeRtmpClient {
     packet.header.timestamp = timestamp;
     let rtmpChunks = this.rtmpChunksCreate(packet);
     this.socket.write(rtmpChunks);
+
+    let payload = videoData;
+    let frame_type = (payload[0] >> 4) & 0x0f;
+    let codec_id = payload[0] & 0x0f;
+
+    if (codec_id == 7 || codec_id == 12) {
+      //cache avc sequence header
+      if (frame_type == 1 && payload[1] == 0) {
+        this.avcSequenceHeader = Buffer.alloc(payload.length);
+        payload.copy(this.avcSequenceHeader);
+        this.isSendAvcSequenceHeader = true;
+        console.log(research_utils.getTimestamp() + " " +
+            this.connection_id + " we send Avc sequenceHeader");
+      }
+    }
   }
 
   pushScript(scriptData, timestamp) {
