@@ -691,6 +691,7 @@ class NodeRtmpSession {
         if (playerSession.isStarting && playerSession.isPlaying && !playerSession.isPause && playerSession.isReceiveAudio) {
           rtmpChunks.writeUInt32LE(playerSession.playStreamId, 8);
           playerSession.res.write(rtmpChunks);
+          playerSession.res.uncork();
         }
       } else if (playerSession instanceof NodeFlvSession) {
         playerSession.res.write(flvTag, null, e => {
@@ -776,6 +777,7 @@ class NodeRtmpSession {
         if (playerSession.isStarting && playerSession.isPlaying && !playerSession.isPause && playerSession.isReceiveVideo) {
           rtmpChunks.writeUInt32LE(playerSession.playStreamId, 8);
           playerSession.res.write(rtmpChunks);
+          playerSession.res.uncork();
         }
       } else if (playerSession instanceof NodeFlvSession) {
         playerSession.res.write(flvTag, null, e => {
@@ -946,6 +948,7 @@ class NodeRtmpSession {
     packet.header.stream_id = this.playStreamId;
     let chunks = this.rtmpChunksCreate(packet);
     this.socket.write(chunks);
+    this.socket.uncork();
   }
 
   ipToBuffer(ip) {
@@ -982,6 +985,7 @@ class NodeRtmpSession {
         if (playerSession.isStarting && playerSession.isPlaying && !playerSession.isPause && playerSession.isReceiveVideo) {
           rtmpChunks.writeUInt32LE(playerSession.playStreamId, 8);
           playerSession.res.write(rtmpChunks);
+          playerSession.res.uncork();
           console.log("I receive addr and send to player " + this.BufferToIpString(packet.payload));
         }
       }

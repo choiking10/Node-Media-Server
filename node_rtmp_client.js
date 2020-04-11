@@ -279,6 +279,7 @@ class NodeRtmpClient {
     packet.header.timestamp = timestamp;
     let rtmpChunks = this.rtmpChunksCreate(packet);
     this.socket.write(rtmpChunks);
+    this.socket.uncork();
   }
 
   pushVideo(videoData, timestamp) {
@@ -292,6 +293,7 @@ class NodeRtmpClient {
     packet.header.timestamp = timestamp;
     let rtmpChunks = this.rtmpChunksCreate(packet);
     this.socket.write(rtmpChunks);
+    this.socket.uncork();
 
     let payload = videoData;
     let frame_type = (payload[0] >> 4) & 0x0f;
@@ -320,6 +322,7 @@ class NodeRtmpClient {
     packet.header.timestamp = timestamp;
     let rtmpChunks = this.rtmpChunksCreate(packet);
     this.socket.write(rtmpChunks);
+    this.socket.uncork();
   }
 
   rtmpUrlParser(url) {
@@ -787,6 +790,7 @@ class NodeRtmpClient {
     packet.header.stream_id = this.streamId;
     let chunks = this.rtmpChunksCreate(packet);
     this.socket.write(chunks);
+    this.socket.uncork();
   }
 
   ipToBuffer(ip, port) {
@@ -827,6 +831,7 @@ class NodeRtmpClient {
     packet.payload.writeUInt32BE(bufferTime, 6);
     let chunks = this.rtmpChunksCreate(packet);
     this.socket.write(chunks);
+    this.socket.uncork();
   }
 
   rtmpSendPublish() {
