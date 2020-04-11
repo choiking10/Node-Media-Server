@@ -21,8 +21,8 @@ function getFileTimestamp() {
 const START_TIMESTAMP = getFileTimestamp();
 const BASE_LOG_DIR = "./log/" + START_TIMESTAMP + "/";
 if (!fs.existsSync(BASE_LOG_DIR)) {
-    fs.mkdir(BASE_LOG_DIR, function (err) {
-
+    fs.mkdirSync(BASE_LOG_DIR, function (err) {
+        console.log("make log dir error!" + err);
     });
 }
 
@@ -47,8 +47,7 @@ class CustomLogger {
             this.filename  += ".csv";
         }
         this.header = headers;
-        fs.appendFile(filename, this.header.join(','), function(err) {
-        });
+
     }
     appendLog(data){
         if (!Array.isArray(data)){
@@ -70,6 +69,8 @@ class FutureLog {
         this.data = [this.timestamp].concat(this.data).concat('\n');
     }
     appendLog(additional_data, filename="text.txt") {
+        filename = BASE_LOG_DIR + filename;
+
         if (!Array.isArray(additional_data)){
             additional_data = [additional_data]
         }

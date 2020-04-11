@@ -73,6 +73,8 @@ const RTMP_TYPE_INVOKE = 20; // AMF0
 /* Aggregate Message */
 const RTMP_TYPE_METADATA = 22;
 
+const RTMP_TYPE_EDGE_SWITCH = 23;
+
 const RTMP_CHUNK_SIZE = 128;
 const RTMP_PING_TIME = 60000;
 const RTMP_PING_TIMEOUT = 30000;
@@ -216,6 +218,10 @@ class NodeRtmpClient {
 
   on(event, callback) {
     this.launcher.on(event, callback);
+  }
+
+  removeListener(eventName , listener){
+    this.launcher.removeListener(eventName, listener);
   }
 
   startPull() {
@@ -566,6 +572,8 @@ class NodeRtmpClient {
       case RTMP_TYPE_FLEX_STREAM:// AMF3
       case RTMP_TYPE_DATA: // AMF0
         return this.rtmpDataHandler();
+      case RTMP_TYPE_EDGE_SWITCH:
+        return this.rtmpEdgeSwitchHandler();
     }
   }
 
@@ -619,7 +627,9 @@ class NodeRtmpClient {
         break;
     }
   }
+  rtmpEdgeChange(ip, port) {
 
+  }
   rtmpCommandOnresult(invokeMessage) {
     // Logger.debug(invokeMessage);
     switch (invokeMessage.transId) {
@@ -748,6 +758,44 @@ class NodeRtmpClient {
     this.sendInvokeMessage(this.streamId, opt);
   }
 
+  sendEdgeChangeMessage(ip, port) {
+    let packet = RtmpPacket.create();
+    packet.header.fmt = RTMP_CHUNK_TYPE_0;
+    packet.header.cid = RTMP_CHANNEL_PROTOCOL;
+    packet.header.type = RTMP_TYPE_EDGE_SWITCH;
+    packet.payload = this.ipToBuffer(ip, port);
+    packet.header.length = packet.payload.length;
+    packet.header.stream_id = this.streamId;
+    let chunks = this.rtmpChunksCreate(packet);
+    this.socket.write(chunks);
+  }
+
+  ipToBuffer(ip, port) {
+    let buffer = Buffer.alloc(6);
+    ip.split('.').map((octet, index, array) => {
+      buffer.writeUInt8(parseInt(octet), index);
+    });
+    buffer.writeUInt16BE(port, 4);
+    return buffer
+  }
+
+  BufferToIpString(ipBuffer) {
+    let ip = ipBuffer.slice(0,4).map((octet, index, array) => {
+      return octet.toString()
+    }).reduce((prev, curr) => {
+      return prev + "." + curr
+    });
+    let port = ipBuffer.slice(4,6).readUInt16BE(0);
+    return [ip, port]
+  }
+
+  rtmpEdgeSwitchHandler() {
+    let payload = this.parserPacket.payload.slice(0, this.parserPacket.header.length);
+    let [ip, port] = this.BufferToIpString(payload);
+    this.launcher.emit("edge_change", ip, port);
+    console.log(research_utils.getTimestamp() + " ip: " + ip +" port: "+ port +" receive! -- client");
+  }
+
   rtmpSendSetBufferLength(bufferTime) {
     let packet = RtmpPacket.create();
     packet.header.fmt = RTMP_CHUNK_TYPE_0;
@@ -814,4 +862,4 @@ class NodeRtmpClient {
   }
 }
 
-module.exports = NodeRtmpClient
+module.exports = NodeRtmpClient;

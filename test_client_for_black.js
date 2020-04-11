@@ -1,23 +1,15 @@
 
 const EDGE_JUPITER_IP = "10.0.10.1";
-const EDGE_EARTH_IP = "10.0.20.1";
 
-const NodeRtmpClient = require('./node_rtmp_client');
+const NodeRtmpEdgeChangeClient = require('./node_rtmp_edge_change_client');
 const research_utils = require('./research_utils');
-
-const poll_addr = "127.0.0.1";
-const push_addr = "143.248.55.86";
 const stream_key = "wins";
 
-let pull_jupiter = new NodeRtmpClient(
+let pull_jupiter = new NodeRtmpEdgeChangeClient(
     'rtmp://' + EDGE_JUPITER_IP + '/live/' + stream_key,
-    "black_from_jupiter"
+    "black"
 );
 
-let pull_earth = new NodeRtmpClient(
-    'rtmp://' + EDGE_EARTH_IP + '/live/' + stream_key,
-    "black_from_earth"
-);
 // rtmp://143.248.55.86:31935/live/wins
 
 //let rtmp_pushing_to_server_client = new NodeRtmpClient('rtmp://' + push_addr + '/live/' + stream_key);
@@ -33,17 +25,17 @@ let pull_earth = new NodeRtmpClient(
 
 
 async function run_pulling(pulling_client) {
-    pulling_client.startPull();
     pulling_client.on('video', (videoData, timestamp) => {
         if(videoData != null)
             research_utils.appendLog(['black', timestamp, videoData.length], "black_pulling.csv");
         else
             research_utils.appendLog(['black', timestamp, "null"], "black_pulling.csv");
 
+        console.log("receive video")
     });
+    pulling_client.startPull();
 }
 
-run_pulling(pull_earth);
 run_pulling(pull_jupiter);
 
 /*

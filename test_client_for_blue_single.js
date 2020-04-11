@@ -1,0 +1,88 @@
+const POLL_FROM_ME = "127.0.0.1";
+const EDGE_JUPITER_IP = "10.0.10.1";
+const EDGE_EARTH_IP = "10.0.20.1";
+
+const NodeRtmpEdgeChangeClient = require('./node_rtmp_edge_change_client');
+const research_utils = require('./research_utils');
+const changeAddr = [
+    [EDGE_EARTH_IP, 1935],
+    [EDGE_JUPITER_IP, 1935]
+];
+
+
+let rtmp_polling_client = new NodeRtmpEdgeChangeClient(
+    'rtmp://' + POLL_FROM_ME + '/live/wins',
+    "blue_send"
+);
+let publisher = new NodeRtmpEdgeChangeClient('rtmp://' +
+    EDGE_JUPITER_IP + '/live/wins');
+
+let count = 0;
+let timeoutId = -1;
+
+setInterval(() => {
+    if (timeoutId != -1) {
+        clearTimeout(timeoutId);
+    }
+    let addr = changeAddr[count++ % changeAddr.length];
+    publisher.readyEdgeChange(addr[0], addr[1]);
+    timeoutId = setTimeout(() => {publisher.DoEdgeChange();}, 1000);
+    console.log( research_utils.getTimestamp()  + publisher.connection_id + " change addr! to " + [addr[0], addr[1]]);
+}, 200000);
+
+
+rtmp_polling_client.on('video', (videoData, timestamp) => {
+    if(videoData != null) {
+        research_utils.appendLog(['jupiter', timestamp, videoData.length],
+            "blue_publish.csv");
+    }
+    else
+        research_utils.appendLog(['jupiter', timestamp, "null"],
+            "blue_publish.csv");
+    publisher.pushVideo(videoData, timestamp);
+});
+
+async function run_rtmp_polling_client() {
+    rtmp_polling_client.startPull();
+    console.log("rtmp_polling_client start");
+}
+
+async function run_publush(publish_client) {
+    publish_client.startPush();
+}
+
+run_publush(publisher);
+run_rtmp_polling_client();
+
+// rtmp://143.248.55.86:31935/live/wins
+
+//
+//let rtmp_polling_from_server_client = new NodeRtmpClient('rtmp://' + push_addr + '/live/' + stream_key);
+/*
+* obs studio ->
+* (node_rtmp_server local) ->
+* rtmp_polling_client ->
+* rtmp_pushing_to_server_client ->
+* (node_rtmp_server remote) ->
+* rtmp_polling_from_server_client
+* */
+
+/*
+rtmp_polling_from_server_client.on('video', (videoData, timestamp) => {
+    research_utils.appendLog(
+        [timestamp, 'rtmp_polling_from_server_client']
+    );
+
+});
+
+async function run_rtmp_pushing_to_server_client() {
+    rtmp_pushing_to_server_client.startPush();
+}
+async function run_rtmp_polling_from_server_client() {
+    rtmp_polling_from_server_client.startPull();
+}
+
+run_rtmp_polling_client();
+run_rtmp_pushing_to_server_client();
+run_rtmp_polling_from_server_client();
+*/
