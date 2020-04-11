@@ -96,7 +96,7 @@ class NodeRtmpEdgeChangeClient {
         this.activeClient.pushVideo(videoData, timestamp);
     }
     pushVideo(videoData, timestamp) {
-        if(this.activeClient.streamId) {
+        if(this.activeClient.streamId == 0) {
             this.cache.add([videoData, timestamp]);
             return;
         }
