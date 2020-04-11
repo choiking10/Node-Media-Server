@@ -15,7 +15,7 @@ let rtmp_polling_client = new NodeRtmpEdgeChangeClient(
     "blue_send"
 );
 let publisher = new NodeRtmpEdgeChangeClient('rtmp://' +
-    EDGE_JUPITER_IP + '/live/wins');
+    changeAddr[1][0] + '/live/wins2');
 
 let count = 0;
 let timeoutId = -1;
@@ -28,7 +28,7 @@ setInterval(() => {
     publisher.readyEdgeChange(addr[0], addr[1]);
     timeoutId = setTimeout(() => {publisher.DoEdgeChange();}, 1000);
     console.log( research_utils.getTimestamp()  + publisher.connection_id + " change addr! to " + [addr[0], addr[1]]);
-}, 200000);
+}, 30000);
 
 
 rtmp_polling_client.on('video', (videoData, timestamp) => {

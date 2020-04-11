@@ -3,7 +3,7 @@ const EDGE_JUPITER_IP = "10.0.10.1";
 
 const NodeRtmpEdgeChangeClient = require('./node_rtmp_edge_change_client');
 const research_utils = require('./research_utils');
-const stream_key = "wins";
+const stream_key = "wins2";
 
 let pull_jupiter = new NodeRtmpEdgeChangeClient(
     'rtmp://' + EDGE_JUPITER_IP + '/live/' + stream_key,
