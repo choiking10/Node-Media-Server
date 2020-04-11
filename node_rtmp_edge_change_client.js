@@ -11,6 +11,7 @@ class NodeRtmpEdgeChangeClient {
         this.nextEdgeClient = null;
         this.callback = {};
         this.directStart = false;
+        this.cache = new Set();
 
         let _this = this;
         this.activeClient.on('edge_change', (ip, port) => {
@@ -78,8 +79,7 @@ class NodeRtmpEdgeChangeClient {
     pushAudio(audioData, timestamp) {
         this.activeClient.pushAudio(audioData, timestamp);
     }
-
-    pushVideo(videoData, timestamp) {
+    _pushVideo(videoData, timestamp) {
         if(this.activeClient.isSendAvcSequenceHeader == false){
             let frame_type = (videoData[0] >> 4) & 0x0f;
             let codec_id = videoData[0] & 0x0f;
@@ -94,6 +94,19 @@ class NodeRtmpEdgeChangeClient {
                 this.activeClient.pushVideo(this.activeClient.avcSequenceHeader, 0);
         }
         this.activeClient.pushVideo(videoData, timestamp);
+    }
+    pushVideo(videoData, timestamp) {
+        if(this.activeClient.streamId) {
+            this.cache.add([videoData, timestamp]);
+            return;
+        }
+        if(this.cache.size != 0){
+            for(let [vid, ts] of this.cache) {
+                this._pushVideo(vid, ts);
+            }
+            this.cache.clear();
+        }
+        this._pushVideo(videoData, timestamp);
     }
 
     pushScript(scriptData, timestamp) {
