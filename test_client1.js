@@ -50,7 +50,7 @@ setInterval(() => {
     rtmp_pushing_to_server_client.readyEdgeChange(addr[0], addr[1]);
     timeoutId = setTimeout(() => {rtmp_pushing_to_server_client.DoEdgeChange();}, 1000);
     console.log( research_utils.getTimestamp()  + rtmp_pushing_to_server_client.connection_id + " change addr! to " + [addr[0], addr[1]]);
-}, 200000);
+}, 20000);
 
 rtmp_polling_from_server_client.on('video', (videoData, timestamp) => {
     console.log( research_utils.getTimestamp() +  rtmp_polling_from_server_client.connection_id + " I recv ["
@@ -70,5 +70,5 @@ async function run_rtmp_polling_from_server_client() {
 
 run_rtmp_polling_client();
 run_rtmp_pushing_to_server_client();
-run_rtmp_polling_from_server_client();
+setTimeout(() => run_rtmp_polling_from_server_client(), 5000);
 

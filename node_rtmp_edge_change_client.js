@@ -90,7 +90,7 @@ class NodeRtmpEdgeChangeClient {
                     is_header = true;
                 }
             }
-            if(is_header)
+            if(!is_header)
                 this.activeClient.pushVideo(this.activeClient.avcSequenceHeader, 0);
         }
         this.activeClient.pushVideo(videoData, timestamp);
