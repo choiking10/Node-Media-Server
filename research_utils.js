@@ -13,6 +13,10 @@ function getTimestamp() {
     return date + '/' + month + '/' + year + ' ' + hour + ':' + min + ':' + sec + " " + ptime.getMilliseconds();
 }
 
+function getTimestampMicro() {
+    return Date.now().toString();
+}
+
 function getFileTimestamp() {
     let ptime = new Date(Date.now());
     return [ptime.getMonth(), ptime.getDate(), ptime.getHours(), ptime.getMinutes()].join('_');
@@ -34,9 +38,24 @@ function appendLog(data, filename="text"){
     if(!filename.endsWith("csv")){
         filename += ".csv";
     }
-    data = [getTimestamp()].concat(data).concat('\n');
+    data = [getTimestampMicro()].concat(data).concat('\n');
     fs.appendFile(filename, data.join(','), function(err) {
     });
+}
+function appendLogForMessage(id, url, event_name, timestamp, length,
+                             real_timestamp, frameType=0, filename=null) {
+    if (filename == null){
+        filename = id;
+    }
+    appendLog([
+        id,
+        url,
+        event_name,
+        timestamp,
+        length,
+        frameType,
+        real_timestamp,
+    ], filename)
 }
 
 class CustomLogger {
@@ -53,7 +72,7 @@ class CustomLogger {
         if (!Array.isArray(data)){
             data = [data]
         }
-        data = [getTimestamp()].concat(data).concat('\n');
+        data = [getTimestampMicro()].concat(data).concat('\n');
         fs.appendFile(this.filename, data.join(','), function(err) {
         });
     }
@@ -61,7 +80,7 @@ class CustomLogger {
 
 class FutureLog {
     constructor(data) {
-        this.timestamp = getTimestamp();
+        this.timestamp = getTimestampMicro();
         this.data = data;
         if (!Array.isArray(this.data)){
             this.data = [this.data]
@@ -370,7 +389,9 @@ class H264BitEditTools {
 }
 
 module.exports = {
+    getTimestampMicro: getTimestampMicro,
     getTimestamp: getTimestamp,
+    appendLogForMessage: appendLogForMessage,
     CustomLogger: CustomLogger,
     appendLog: appendLog,
     FutureLog: FutureLog,

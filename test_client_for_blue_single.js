@@ -15,7 +15,7 @@ let rtmp_polling_client = new NodeRtmpEdgeChangeClient(
     "blue_send"
 );
 let publisher = new NodeRtmpEdgeChangeClient('rtmp://' +
-    changeAddr[1][0] + '/live/wins2');
+    changeAddr[1][0] + '/live/wins2', 'blue-publisher');
 
 let count = 0;
 let timeoutId = -1;
