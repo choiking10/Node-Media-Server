@@ -114,16 +114,6 @@ class NodeRtmpClient {
   constructor(rtmpUrl, connection_id="no_id") {
     this.url = rtmpUrl;
     this.connection_id = connection_id;
-    this.packetLogger = new research_utils.CustomLogger(connection_id, [
-      "id",
-      "header.cid",
-      "header.stream_id",
-      "header.length",
-      "clock",
-      "bytes",
-      "offset-bef",
-      "receive_bytes",
-    ]);
     this.info = this.rtmpUrlParser(rtmpUrl);
     this.isPublish = false;
     this.launcher = new EventEmitter();
@@ -305,8 +295,6 @@ class NodeRtmpClient {
         this.avcSequenceHeader = Buffer.alloc(payload.length);
         payload.copy(this.avcSequenceHeader);
         this.isSendAvcSequenceHeader = true;
-        console.log(research_utils.getTimestamp() + " " +
-            this.connection_id + " we send Avc sequenceHeader");
       }
     }
   }
@@ -495,17 +483,6 @@ class NodeRtmpClient {
           this.parserPacket.bytes += size;
           offset += size;
 
-          this.packetLogger.appendLog(
-              [
-                this.connection_id,
-                this.parserPacket.header.cid,
-                this.parserPacket.header.stream_id,
-                this.parserPacket.header.length,
-                this.parserPacket.clock,
-                this.parserPacket.bytes,
-                offset-bef,
-                bytes,
-              ]);
           bef = offset;
           if (this.parserPacket.bytes >= this.parserPacket.header.length) {
             this.parserState = RTMP_PARSE_INIT;
