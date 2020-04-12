@@ -28,10 +28,15 @@ let push_jupiter = new NodeRtmpEdgeChangeClient('rtmp://' + EDGE_JUPITER_IP + '/
 
 async function run_pulling(pulling_client) {
     pulling_client.on('video', (videoData, timestamp) => {
-        if(videoData != null)
-            research_utils.appendLog(['black', timestamp, videoData.length], "black_pulling.csv");
-        else
-            research_utils.appendLog(['black', timestamp, "null"], "black_pulling.csv");
+        research_utils.appendLogForMessage(
+            pulling_client.connection_id,
+            pulling_client.activeClient.url,
+            'VideoPolling',
+            timestamp,
+            videoData.length,
+            research_utils.getTimestampMicro(),
+            (videoData[0] >> 4) & 0x0f
+        );
 
         console.log(research_utils.getTimestamp() + " " +
             this.connection_id + " I receive video (" + timestamp + ")")

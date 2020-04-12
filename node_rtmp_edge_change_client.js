@@ -18,6 +18,15 @@ class NodeRtmpEdgeChangeClient {
             _this.readyEdgeChange(ip, port);
             console.log(research_utils.getTimestamp() + " " +
                 this.connection_id + " viewer will exchange to " + [ip, port]);
+
+            research_utils.appendLogForMessage(
+                this.connection_id,
+                this.activeClient.url,
+                'edge_change',
+                0,
+                0,
+                research_utils.getTimestampMicro()
+            );
         });
     }
 
@@ -53,6 +62,16 @@ class NodeRtmpEdgeChangeClient {
         }
         console.log(research_utils.getTimestamp()  + " " +
             this.connection_id + " ready to exchange to " + this.activeClient.url);
+
+        research_utils.appendLogForMessage(
+            this.connection_id,
+            this.activeClient.url,
+            'readyEdgeChange',
+            0,
+            0,
+            research_utils.getTimestampMicro()
+        );
+
         if (this.directStart){
             this.directStart = false;
             console.log(research_utils.getTimestamp()  + " " +
@@ -74,6 +93,15 @@ class NodeRtmpEdgeChangeClient {
         this.nextEdgeClient = null;
         console.log(research_utils.getTimestamp()  + " " +
             this.connection_id + " exchange to " + this.activeClient.url);
+
+        research_utils.appendLogForMessage(
+            this.connection_id,
+            this.activeClient.url,
+            'DoEdgeChange',
+            0,
+            0,
+            research_utils.getTimestampMicro()
+        );
     }
 
     pushAudio(audioData, timestamp) {
@@ -86,16 +114,26 @@ class NodeRtmpEdgeChangeClient {
 
         if(this.activeClient.isSendAvcSequenceHeader == true && frame_type == 1 && videoData[1] == 0 && codec_id == 7) return;
         if(this.activeClient.isSendAvcSequenceHeader == false){
-           let is_header = false;
+            let is_header = false;
             if (codec_id == 7 || codec_id == 12) {
                 //cache avc sequence header
                 if (frame_type == 1 && videoData[1] == 0) {
                     is_header = true;
                 }
             }
-            if(!is_header)
+            if(!is_header) {
                 this.activeClient.pushVideo(this.activeClient.avcSequenceHeader, 0);
+            }
         }
+        research_utils.appendLogForMessage(
+            this.connection_id,
+            this.activeClient.url,
+            'VideoPush',
+            timestamp,
+            videoData.length,
+            research_utils.getTimestampMicro(),
+            frame_type
+        );
         this.activeClient.pushVideo(videoData, timestamp);
     }
     pushVideo(videoData, timestamp) {
