@@ -2,6 +2,7 @@
 const EDGE_JUPITER_IP = "10.0.10.1";
 
 const NodeRtmpEdgeChangeClient = require('./node_rtmp_edge_change_client');
+const NodeRtmpClient = require('./node_rtmp_client');
 const research_utils = require('./research_utils');
 const stream_key = "wins2";
 
@@ -10,6 +11,7 @@ let pull_jupiter = new NodeRtmpEdgeChangeClient(
     "black"
 );
 
+let push_jupiter = new NodeRtmpEdgeChangeClient('rtmp://' + EDGE_JUPITER_IP + '/live/wins3', 'black-pusher');
 // rtmp://143.248.55.86:31935/live/wins
 
 //let rtmp_pushing_to_server_client = new NodeRtmpClient('rtmp://' + push_addr + '/live/' + stream_key);
@@ -33,7 +35,10 @@ async function run_pulling(pulling_client) {
 
         console.log(research_utils.getTimestamp() + " " +
             this.connection_id + " I receive video (" + timestamp + ")")
+        push_jupiter.pushVideo(videoData, timestamp);
     });
+
+    push_jupiter.startPush();
     pulling_client.startPull();
 }
 

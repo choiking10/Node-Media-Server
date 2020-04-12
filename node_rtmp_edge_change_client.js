@@ -80,10 +80,13 @@ class NodeRtmpEdgeChangeClient {
         this.activeClient.pushAudio(audioData, timestamp);
     }
     _pushVideo(videoData, timestamp) {
+       let frame_type = (videoData[0] >> 4) & 0x0f;
+       let codec_id = videoData[0] & 0x0f;
+         
+
+        if(this.activeClient.isSendAvcSequenceHeader == true && frame_type == 1 && videoData[1] == 0 && codec_id == 7) return;
         if(this.activeClient.isSendAvcSequenceHeader == false){
-            let frame_type = (videoData[0] >> 4) & 0x0f;
-            let codec_id = videoData[0] & 0x0f;
-            let is_header = false;
+           let is_header = false;
             if (codec_id == 7 || codec_id == 12) {
                 //cache avc sequence header
                 if (frame_type == 1 && videoData[1] == 0) {
