@@ -28,7 +28,7 @@ let publisher = new NodeRtmpEdgeChangeClient('rtmp://' +
 let count = 0;
 let timeoutId = -1;
 
-publisher.setEdgeChangeStrategy(STRATEGY_BEFORE_I_FRAME);
+publisher.setEdgeChangeStrategy(parseInt(process.argv[2]));
 
 setInterval(() => {
     if (timeoutId != -1) {

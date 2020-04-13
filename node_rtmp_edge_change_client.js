@@ -65,6 +65,9 @@ class NodeRtmpEdgeChangeClient {
         }
     }
     async readyEdgeChange(ip, port) {
+        console.log(research_utils.getTimestamp()  + " " +
+            this.connection_id + " ready to exchange to " + this.activeClient.url);
+
         this.activeClient.sendEdgeChangeMessage(ip, port);
         let presentInfo = Object.assign({}, this.activeClient.info);
         this.nextEdgeClient = new NodeRtmpClient(
@@ -89,8 +92,6 @@ class NodeRtmpEdgeChangeClient {
 
             this.nextEdgeClient.startPull();
         }
-        console.log(research_utils.getTimestamp()  + " " +
-            this.connection_id + " ready to exchange to " + this.activeClient.url);
 
     }
     DoEdgeChange() {
