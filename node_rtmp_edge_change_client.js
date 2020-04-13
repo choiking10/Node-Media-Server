@@ -48,15 +48,19 @@ class NodeRtmpEdgeChangeClient {
         switch ((this.edge_change_strategy)) {
             case STRATEGY_AFTER_FIXED_TIME:
                 setTimeout(()=> this.DoEdgeChange(), this.edge_change_value);
+                console.log("STRATEGY_AFTER_FIXED_TIME");
                 break;
             case STRATEGY_HARD_HAND_OFF:
                 this.DoEdgeChange();
+                console.log("STRATEGY_HARD_HAND_OFF");
                 break;
             case STRATEGY_AFTER_I_FRAME:
                 this.edge_change_after_I = true;
+                console.log("STRATEGY_AFTER_I_FRAME");
                 break;
             case STRATEGY_BEFORE_I_FRAME:
                 this.edge_change_before_I = true;
+                console.log("STRATEGY_BEFORE_I_FRAME");
                 break;
         }
     }
@@ -138,13 +142,13 @@ class NodeRtmpEdgeChangeClient {
             );
         }
 
-        if(this.edge_change_before_I){
+        if(this.edge_change_before_I && frame_type == 1){
             this.edge_change_before_I = false;
             this.DoEdgeChange();
         }
         this.activeClient.pushVideo(videoData, timestamp);
 
-        if(this.edge_change_after_I){
+        if(this.edge_change_after_I && frame_type == 1){
             this.edge_change_after_I = false;
             this.DoEdgeChange();
 

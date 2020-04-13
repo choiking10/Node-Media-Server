@@ -1,12 +1,14 @@
 const POLL_FROM_ME = "127.0.0.1";
 const EDGE_JUPITER_IP = "10.0.10.1";
 const EDGE_EARTH_IP = "10.0.20.1";
+const EDGE_JUPITER_PORT = 1935;
+const EDGE_EARTH_PORT = 1936;
 
 const NodeRtmpEdgeChangeClient = require('./node_rtmp_edge_change_client');
 const research_utils = require('./research_utils');
 const changeAddr = [
-    [EDGE_EARTH_IP, 1935],
-    [EDGE_JUPITER_IP, 1935]
+    [EDGE_EARTH_IP, EDGE_JUPITER_PORT],
+    [EDGE_JUPITER_IP, EDGE_EARTH_PORT]
 ];
 
 const STRATEGY_DO_YOUR_SELF = 0;
@@ -26,7 +28,7 @@ let publisher = new NodeRtmpEdgeChangeClient('rtmp://' +
 let count = 0;
 let timeoutId = -1;
 
-publisher.setEdgeChangeStrategy(STRATEGY_HARD_HAND_OFF);
+publisher.setEdgeChangeStrategy(STRATEGY_BEFORE_I_FRAME);
 
 setInterval(() => {
     if (timeoutId != -1) {
