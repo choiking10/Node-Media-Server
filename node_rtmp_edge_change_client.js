@@ -2,6 +2,15 @@
 const NodeRtmpClient = require('./node_rtmp_client');
 const research_utils = require('./research_utils');
 
+const STRATEGY_DO_YOUR_SELF = 0;
+const STRATEGY_HARD_HAND_OFF = 1;
+const STRATEGY_AFTER_FIXED_TIME = 2;
+const STRATEGY_BEFORE_I_FRAME = 3;
+const STRATEGY_AFTER_I_FRAME = 4;
+
+const EDGE_CHANGE_BEFORE_READY = 0;
+const EDGE_CHANGE_READY = 0;
+
 
 class NodeRtmpEdgeChangeClient {
     constructor(rtmpUrl, connection_id="no_id") {
@@ -11,6 +20,10 @@ class NodeRtmpEdgeChangeClient {
         this.nextEdgeClient = null;
         this.callback = {};
         this.directStart = false;
+        this.edge_change_strategy = STRATEGY_DO_YOUR_SELF;
+        this.edge_change_value = 0;
+        this.edge_change_after_I = false;
+        this.edge_change_before_I = false;
         this.cache = new Set();
 
         let _this = this;
@@ -35,6 +48,26 @@ class NodeRtmpEdgeChangeClient {
         this.activeClient.on(event, callback);
     }
 
+    setEdgeChangeStrategy(strategy_name, value=0) {
+        this.edge_change_strategy = strategy_name;
+        this.edge_change_value = value;
+    }
+    edgeChangeHandler() {
+        switch ((this.edge_change_strategy)) {
+            case STRATEGY_AFTER_FIXED_TIME:
+                setTimeout(()=> this.DoEdgeChange(), this.edge_change_value);
+                break;
+            case STRATEGY_HARD_HAND_OFF:
+                this.DoEdgeChange();
+                break;
+            case STRATEGY_AFTER_I_FRAME:
+                this.edge_change_after_I = true;
+                break;
+            case STRATEGY_BEFORE_I_FRAME:
+                this.edge_change_before_I = true;
+                break;
+        }
+    }
     async readyEdgeChange(ip, port) {
         this.activeClient.sendEdgeChangeMessage(ip, port);
         let presentInfo = Object.assign({}, this.activeClient.info);
@@ -49,6 +82,7 @@ class NodeRtmpEdgeChangeClient {
         });
         if(this.activeClient.isPublish){
             this.nextEdgeClient.startPush();
+            this.edgeChangeHandler();
         }
         else {
             let _this = this;
@@ -58,7 +92,6 @@ class NodeRtmpEdgeChangeClient {
             });
 
             this.nextEdgeClient.startPull();
-
         }
         console.log(research_utils.getTimestamp()  + " " +
             this.connection_id + " ready to exchange to " + this.activeClient.url);
@@ -71,13 +104,6 @@ class NodeRtmpEdgeChangeClient {
             0,
             research_utils.getTimestampMicro()
         );
-
-        if (this.directStart){
-            this.directStart = false;
-            console.log(research_utils.getTimestamp()  + " " +
-                this.connection_id + "direct start!");
-            this.DoEdgeChange();
-        }
     }
     DoEdgeChange() {
         if(this.nextEdgeClient == null) {
@@ -110,7 +136,6 @@ class NodeRtmpEdgeChangeClient {
     _pushVideo(videoData, timestamp) {
        let frame_type = (videoData[0] >> 4) & 0x0f;
        let codec_id = videoData[0] & 0x0f;
-         
 
         if(this.activeClient.isSendAvcSequenceHeader == true && frame_type == 1 && videoData[1] == 0 && codec_id == 7) return;
         if(this.activeClient.isSendAvcSequenceHeader == false){
@@ -134,7 +159,17 @@ class NodeRtmpEdgeChangeClient {
             research_utils.getTimestampMicro(),
             frame_type
         );
+        if(this.edge_change_before_I){
+            this.edge_change_before_I = false;
+            this.DoEdgeChange();
+        }
         this.activeClient.pushVideo(videoData, timestamp);
+
+        if(this.edge_change_after_I){
+            this.edge_change_after_I = false;
+            this.DoEdgeChange();
+
+        }
     }
     pushVideo(videoData, timestamp) {
         if(this.activeClient.streamId == 0) {

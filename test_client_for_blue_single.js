@@ -9,6 +9,12 @@ const changeAddr = [
     [EDGE_JUPITER_IP, 1935]
 ];
 
+const STRATEGY_DO_YOUR_SELF = 0;
+const STRATEGY_HARD_HAND_OFF = 1;
+const STRATEGY_AFTER_FIXED_TIME = 2;
+const STRATEGY_BEFORE_I_FRAME = 3;
+const STRATEGY_AFTER_I_FRAME = 4;
+
 
 let rtmp_polling_client = new NodeRtmpEdgeChangeClient(
     'rtmp://' + POLL_FROM_ME + '/live/wins',
@@ -20,15 +26,16 @@ let publisher = new NodeRtmpEdgeChangeClient('rtmp://' +
 let count = 0;
 let timeoutId = -1;
 
+publisher.setEdgeChangeStrategy(STRATEGY_HARD_HAND_OFF);
+
 setInterval(() => {
     if (timeoutId != -1) {
         clearTimeout(timeoutId);
     }
     let addr = changeAddr[count++ % changeAddr.length];
     publisher.readyEdgeChange(addr[0], addr[1]);
-    timeoutId = setTimeout(() => {publisher.DoEdgeChange();}, 1000);
     console.log( research_utils.getTimestamp()  + publisher.connection_id + " change addr! to " + [addr[0], addr[1]]);
-}, 30000);
+}, 20000);
 
 
 rtmp_polling_client.on('video', (videoData, timestamp) => {
