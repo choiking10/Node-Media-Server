@@ -2,7 +2,7 @@ const POLL_FROM_ME = "127.0.0.1";
 const EDGE_JUPITER_IP = "10.0.10.1";
 const EDGE_EARTH_IP = "10.0.20.1";
 const EDGE_JUPITER_PORT = 1935;
-const EDGE_EARTH_PORT = 1936;
+const EDGE_EARTH_PORT = 1935;
 
 const NodeRtmpEdgeChangeClient = require('./node_rtmp_edge_change_client');
 const research_utils = require('./research_utils');

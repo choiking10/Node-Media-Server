@@ -117,6 +117,10 @@ class NodeRtmpEdgeChangeClient {
        let frame_type = (videoData[0] >> 4) & 0x0f;
        let codec_id = videoData[0] & 0x0f;
 
+        if(this.edge_change_before_I && frame_type == 1){
+            this.edge_change_before_I = false;
+            this.DoEdgeChange();
+        }
         if(this.activeClient.isSendAvcSequenceHeader == true && frame_type == 1 && videoData[1] == 0 && codec_id == 7) return;
         if(this.activeClient.isSendAvcSequenceHeader == false){
             let is_header = false;
@@ -142,10 +146,6 @@ class NodeRtmpEdgeChangeClient {
             );
         }
 
-        if(this.edge_change_before_I && frame_type == 1){
-            this.edge_change_before_I = false;
-            this.DoEdgeChange();
-        }
         this.activeClient.pushVideo(videoData, timestamp);
 
         if(this.edge_change_after_I && frame_type == 1){
