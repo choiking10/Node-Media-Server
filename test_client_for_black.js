@@ -28,15 +28,22 @@ let push_jupiter = new NodeRtmpEdgeChangeClient('rtmp://' + EDGE_JUPITER_IP + '/
 
 async function run_pulling(pulling_client) {
     pulling_client.on('video', (videoData, timestamp) => {
-        research_utils.appendLogForMessage(
-            pulling_client.connection_id,
-            pulling_client.activeClient.url,
-            'VideoPolling',
-            timestamp,
-            videoData.length,
-            research_utils.getTimestampMicro(),
-            (videoData[0] >> 4) & 0x0f
-        );
+
+        let frame_type = (videoData[0] >> 4) & 0x0f;
+        let codec_id = videoData[0] & 0x0f;
+
+        if(!(frame_type == 1 && videoData[1] ==0 && codec_id == 7)){
+            research_utils.appendLogForMessage(
+                pulling_client.connection_id,
+                pulling_client.activeClient.url,
+                'VideoPolling',
+                timestamp,
+                videoData.length,
+                research_utils.getTimestampMicro(),
+                (videoData[0] >> 4) & 0x0f
+            );
+        }
+
 
         console.log(research_utils.getTimestamp() + " " +
             pulling_client.connection_id + " I receive video (" + timestamp + ")")
