@@ -61,8 +61,13 @@ class NodeRtmpEdgeChangeClient {
                 console.log("STRATEGY_AFTER_I_FRAME");
                 break;
             case STRATEGY_BEFORE_I_FRAME:
-                setTimeout(()=> _this.ready_change = true, 100);
+                this.ready_change = true;
                 console.log("STRATEGY_BEFORE_I_FRAME");
+                break;
+
+            case STRATEGY_NOT_NEAR_I_FRAME:
+                setTimeout(()=> _this.ready_change = true, 100);
+                console.log("STRATEGY_NOT_NEAR_I_FRAME");
                 break;
         }
     }
