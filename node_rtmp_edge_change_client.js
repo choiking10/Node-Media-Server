@@ -7,6 +7,7 @@ const STRATEGY_HARD_HAND_OFF = 1;
 const STRATEGY_AFTER_FIXED_TIME = 2;
 const STRATEGY_BEFORE_I_FRAME = 3;
 const STRATEGY_AFTER_I_FRAME = 4;
+const STRATEGY_NOT_NEAR_I_FRAME = 5;
 
 const EDGE_CHANGE_BEFORE_READY = 0;
 const EDGE_CHANGE_READY = 0;
@@ -22,9 +23,9 @@ class NodeRtmpEdgeChangeClient {
         this.directStart = false;
         this.edge_change_strategy = STRATEGY_DO_YOUR_SELF;
         this.edge_change_value = 0;
-        this.edge_change_after_I = false;
-        this.edge_change_before_I = false;
+        this.ready_change = false;
         this.cache = new Set();
+        this.frame_count = 0;
 
         let _this = this;
         this.activeClient.on('edge_change', (ip, port) => {
@@ -45,9 +46,10 @@ class NodeRtmpEdgeChangeClient {
         this.edge_change_value = value;
     }
     edgeChangeHandler() {
+        let _this = this;
         switch ((this.edge_change_strategy)) {
             case STRATEGY_AFTER_FIXED_TIME:
-                setTimeout(()=> this.DoEdgeChange(), this.edge_change_value);
+                setTimeout(()=> _this.DoEdgeChange(), this.edge_change_value);
                 console.log("STRATEGY_AFTER_FIXED_TIME");
                 break;
             case STRATEGY_HARD_HAND_OFF:
@@ -55,11 +57,11 @@ class NodeRtmpEdgeChangeClient {
                 console.log("STRATEGY_HARD_HAND_OFF");
                 break;
             case STRATEGY_AFTER_I_FRAME:
-                this.edge_change_after_I = true;
+                this.ready_change = true;
                 console.log("STRATEGY_AFTER_I_FRAME");
                 break;
             case STRATEGY_BEFORE_I_FRAME:
-                this.edge_change_before_I = true;
+                setTimeout(()=> _this.ready_change = true, 100);
                 console.log("STRATEGY_BEFORE_I_FRAME");
                 break;
         }
@@ -116,15 +118,27 @@ class NodeRtmpEdgeChangeClient {
         this.activeClient.pushAudio(audioData, timestamp);
     }
     _pushVideo(videoData, timestamp) {
-       let frame_type = (videoData[0] >> 4) & 0x0f;
-       let codec_id = videoData[0] & 0x0f;
+        let frame_type = (videoData[0] >> 4) & 0x0f;
+        let codec_id = videoData[0] & 0x0f;
 
-        if(this.edge_change_before_I && frame_type == 1){
-            this.edge_change_before_I = false;
+        if(this.edge_change_strategy == STRATEGY_BEFORE_I_FRAME &&
+            this.ready_change && frame_type == 1){
             this.DoEdgeChange();
+            this.ready_change = false;
+        } else if(this.edge_change_strategy == STRATEGY_NOT_NEAR_I_FRAME &&
+            this.ready_change && frame_type == 1 && 100 <= this.frame_count <= 200){
+            this.DoEdgeChange();
+            this.ready_change = false;
         } else if(this.directStart){
             this.DoEdgeChange();
+            this.ready_change = false;
         }
+
+        this.frame_count += 1;
+        if(frame_type == 1) {
+            this.frame_count = 0;
+        }
+
         if(this.activeClient.isSendAvcSequenceHeader == true && frame_type == 1 && videoData[1] == 0 && codec_id == 7) return;
         if(this.activeClient.isSendAvcSequenceHeader == false){
             let is_header = false;
@@ -152,9 +166,10 @@ class NodeRtmpEdgeChangeClient {
 
         this.activeClient.pushVideo(videoData, timestamp);
 
-        if(this.edge_change_after_I && frame_type == 1){
-            this.edge_change_after_I = false;
+        if(this.edge_change_strategy == STRATEGY_AFTER_I_FRAME &&
+            this.ready_change && frame_type == 1){
             this.DoEdgeChange();
+            this.ready_change = false;
 
         }
     }
