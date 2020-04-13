@@ -135,6 +135,7 @@ class NodeRtmpEdgeChangeClient {
             100 <= this.frame_count && this.frame_count <= 200){
             this.DoEdgeChange();
             this.ready_change = false;
+            console.log("we change at " + this.frame_count);
         } else if(this.directStart){
             this.DoEdgeChange();
             this.ready_change = false;
