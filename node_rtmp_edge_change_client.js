@@ -32,14 +32,6 @@ class NodeRtmpEdgeChangeClient {
             console.log(research_utils.getTimestamp() + " " +
                 this.connection_id + " viewer will exchange to " + [ip, port]);
 
-            research_utils.appendLogForMessage(
-                this.connection_id,
-                this.activeClient.url,
-                'edge_change',
-                0,
-                0,
-                research_utils.getTimestampMicro()
-            );
         });
     }
 
@@ -96,14 +88,6 @@ class NodeRtmpEdgeChangeClient {
         console.log(research_utils.getTimestamp()  + " " +
             this.connection_id + " ready to exchange to " + this.activeClient.url);
 
-        research_utils.appendLogForMessage(
-            this.connection_id,
-            this.activeClient.url,
-            'readyEdgeChange',
-            0,
-            0,
-            research_utils.getTimestampMicro()
-        );
     }
     DoEdgeChange() {
         if(this.nextEdgeClient == null) {
@@ -120,14 +104,6 @@ class NodeRtmpEdgeChangeClient {
         console.log(research_utils.getTimestamp()  + " " +
             this.connection_id + " exchange to " + this.activeClient.url);
 
-        research_utils.appendLogForMessage(
-            this.connection_id,
-            this.activeClient.url,
-            'DoEdgeChange',
-            0,
-            0,
-            research_utils.getTimestampMicro()
-        );
     }
 
     pushAudio(audioData, timestamp) {
@@ -150,15 +126,18 @@ class NodeRtmpEdgeChangeClient {
                 this.activeClient.pushVideo(this.activeClient.avcSequenceHeader, 0);
             }
         }
-        research_utils.appendLogForMessage(
-            this.connection_id,
-            this.activeClient.url,
-            'VideoPush',
-            timestamp,
-            videoData.length,
-            research_utils.getTimestampMicro(),
-            frame_type
-        );
+        if(!(frame_type == 1 && videoData[1] ==0 && codec_id == 7)){
+            research_utils.appendLogForMessage(
+                this.connection_id,
+                this.activeClient.url,
+                'VideoPush',
+                timestamp,
+                videoData.length,
+                research_utils.getTimestampMicro(),
+                frame_type
+            );
+        }
+
         if(this.edge_change_before_I){
             this.edge_change_before_I = false;
             this.DoEdgeChange();

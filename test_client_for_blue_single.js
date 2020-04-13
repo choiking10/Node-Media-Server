@@ -39,13 +39,6 @@ setInterval(() => {
 
 
 rtmp_polling_client.on('video', (videoData, timestamp) => {
-    if(videoData != null) {
-        research_utils.appendLog(['jupiter', timestamp, videoData.length],
-            "blue_publish.csv");
-    }
-    else
-        research_utils.appendLog(['jupiter', timestamp, "null"],
-            "blue_publish.csv");
     publisher.pushVideo(videoData, timestamp);
 });
 
