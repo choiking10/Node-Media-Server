@@ -95,6 +95,7 @@ class NodeRtmpEdgeChangeClient {
     }
     DoEdgeChange() {
         if(this.nextEdgeClient == null) {
+            console.log("directStart!");
             this.directStart = true;
             return;
         }
@@ -119,6 +120,8 @@ class NodeRtmpEdgeChangeClient {
 
         if(this.edge_change_before_I && frame_type == 1){
             this.edge_change_before_I = false;
+            this.DoEdgeChange();
+        } else if(this.directStart){
             this.DoEdgeChange();
         }
         if(this.activeClient.isSendAvcSequenceHeader == true && frame_type == 1 && videoData[1] == 0 && codec_id == 7) return;
