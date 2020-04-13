@@ -35,8 +35,9 @@ setInterval(() => {
         clearTimeout(timeoutId);
     }
     let addr = changeAddr[count++ % changeAddr.length];
+    console.log( research_utils.getTimestamp()  + " " +
+        publisher.connection_id + " try to change addr! to " + [addr[0], addr[1]]);
     publisher.readyEdgeChange(addr[0], addr[1]);
-    console.log( research_utils.getTimestamp()  + publisher.connection_id + " change addr! to " + [addr[0], addr[1]]);
 }, 20000);
 
 

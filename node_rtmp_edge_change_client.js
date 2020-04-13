@@ -40,7 +40,7 @@ class NodeRtmpEdgeChangeClient {
         this.activeClient.on(event, callback);
     }
 
-    setEdgeChangeStrategy(strategy_name, value=0) {
+    setEdgeChangeStrategy(strategy_name, value=1000) {
         this.edge_change_strategy = strategy_name;
         this.edge_change_value = value;
     }
