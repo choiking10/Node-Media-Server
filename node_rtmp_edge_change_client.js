@@ -131,7 +131,8 @@ class NodeRtmpEdgeChangeClient {
             this.DoEdgeChange();
             this.ready_change = false;
         } else if(this.edge_change_strategy == STRATEGY_NOT_NEAR_I_FRAME &&
-            this.ready_change && frame_type == 1 && 100 <= this.frame_count <= 200){
+            this.ready_change && frame_type == 1 &&
+            100 <= this.frame_count && this.frame_count <= 200){
             this.DoEdgeChange();
             this.ready_change = false;
         } else if(this.directStart){
