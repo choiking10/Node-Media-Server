@@ -49,7 +49,10 @@ setInterval(() => {
     if (timeoutId != -1) {
         clearTimeout(timeoutId);
     }
-    exec(handOffScript[count]);
+    myShellScript = exec(handOffScript[count]);
+    myShellScript.stdout.on('data', (data)=>{
+        console.log(data);
+    });
     let addr = changeAddr[count++ % changeAddr.length];
     console.log( research_utils.getTimestamp()  + " " +
         publisher.connection_id + " try to change addr! to " + [addr[0], addr[1]]);
