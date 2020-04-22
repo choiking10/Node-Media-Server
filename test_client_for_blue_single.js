@@ -1,14 +1,29 @@
-const POLL_FROM_ME = "127.0.0.1";
-const EDGE_JUPITER_IP = "10.0.10.1";
-const EDGE_EARTH_IP = "10.0.20.1";
-const EDGE_JUPITER_PORT = 1935;
-const EDGE_EARTH_PORT = 1935;
+const exec = require('child_process').exec;
+
+
+
+let POLL_FROM_ME = "127.0.0.1";
+let EDGE_JUPITER_IP = "10.0.10.1";
+let EDGE_EARTH_IP = "10.0.20.1";
+let EDGE_JUPITER_PORT = 1935;
+let EDGE_EARTH_PORT = 1935;
+
+if(LOCAL_TEST) {
+    EDGE_JUPITER_IP = "127.0.0.1";
+    EDGE_EARTH_IP = "127.0.0.1";
+    EDGE_JUPITER_PORT = 1935;
+    EDGE_EARTH_PORT = 1936;
+}
 
 const NodeRtmpEdgeChangeClient = require('./node_rtmp_edge_change_client');
 const research_utils = require('./research_utils');
 const changeAddr = [
     [EDGE_EARTH_IP, EDGE_JUPITER_PORT],
     [EDGE_JUPITER_IP, EDGE_EARTH_PORT]
+];
+const handOffScript = [
+    'sh bash/route_to_earth.sh',
+    'sh bash/route_to_jupiter.sh'
 ];
 
 const STRATEGY_DO_YOUR_SELF = 0;
@@ -34,9 +49,11 @@ setInterval(() => {
     if (timeoutId != -1) {
         clearTimeout(timeoutId);
     }
+    exec(handOffScript[count]);
     let addr = changeAddr[count++ % changeAddr.length];
     console.log( research_utils.getTimestamp()  + " " +
         publisher.connection_id + " try to change addr! to " + [addr[0], addr[1]]);
+
     publisher.readyEdgeChange(addr[0], addr[1]);
 }, 20000);
 

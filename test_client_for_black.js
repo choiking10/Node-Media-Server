@@ -1,6 +1,11 @@
 
-const EDGE_JUPITER_IP = "10.0.10.1";
-const EDGE_JUPITER_PORT = 1935;
+let EDGE_JUPITER_IP = "10.0.10.1";
+let EDGE_JUPITER_PORT = 1935;
+
+
+if(LOCAL_TEST) {
+    EDGE_JUPITER_IP = "127.0.0.1";
+}
 
 const NodeRtmpEdgeChangeClient = require('./node_rtmp_edge_change_client');
 const NodeRtmpClient = require('./node_rtmp_client');

@@ -26,14 +26,17 @@ class NodeRtmpEdgeChangeClient {
         this.ready_change = false;
         this.cache = new Set();
         this.frame_count = 0;
+        this.bef_time_stamp = -1;
 
         let _this = this;
         this.activeClient.on('edge_change', (ip, port) => {
             _this.readyEdgeChange(ip, port);
             console.log(research_utils.getTimestamp() + " " +
                 this.connection_id + " viewer will exchange to " + [ip, port]);
-
         });
+        this.activeClient.on('video', (videoData, timestamp) => {
+            _this.bef_time_stamp = timestamp;
+        })
     }
 
     on(event, callback){
@@ -133,9 +136,9 @@ class NodeRtmpEdgeChangeClient {
         } else if(this.edge_change_strategy == STRATEGY_NOT_NEAR_I_FRAME &&
             this.ready_change &&
             100 <= this.frame_count && this.frame_count <= 200){
+            console.log("we change at " + this.frame_count);
             this.DoEdgeChange();
             this.ready_change = false;
-            console.log("we change at " + this.frame_count);
         } else if(this.directStart){
             this.DoEdgeChange();
             this.ready_change = false;
