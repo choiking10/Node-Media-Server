@@ -51,7 +51,7 @@ setInterval(() => {
         clearTimeout(timeoutId);
     }
     if (!LOCAL_TEST) {
-        myShellScript = exec(handOffScript[count]);
+        myShellScript = exec(handOffScript[count % handOffScript.length]);
         myShellScript.stdout.on('data', (data)=>{
             console.log(data);
         });
