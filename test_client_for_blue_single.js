@@ -1,5 +1,6 @@
 const exec = require('child_process').exec;
 
+let LOCAL_TEST = false;
 
 
 let POLL_FROM_ME = "127.0.0.1";
@@ -49,10 +50,12 @@ setInterval(() => {
     if (timeoutId != -1) {
         clearTimeout(timeoutId);
     }
-    myShellScript = exec(handOffScript[count]);
-    myShellScript.stdout.on('data', (data)=>{
-        console.log(data);
-    });
+    if (!LOCAL_TEST) {
+        myShellScript = exec(handOffScript[count]);
+        myShellScript.stdout.on('data', (data)=>{
+            console.log(data);
+        });
+    }
     let addr = changeAddr[count++ % changeAddr.length];
     console.log( research_utils.getTimestamp()  + " " +
         publisher.connection_id + " try to change addr! to " + [addr[0], addr[1]]);

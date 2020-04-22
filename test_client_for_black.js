@@ -1,4 +1,6 @@
 
+let LOCAL_TEST = false;
+
 let EDGE_JUPITER_IP = "10.0.10.1";
 let EDGE_JUPITER_PORT = 1935;
 
