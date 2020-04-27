@@ -19,8 +19,8 @@ if(LOCAL_TEST) {
 const NodeRtmpEdgeChangeClient = require('./node_rtmp_edge_change_client');
 const research_utils = require('./research_utils');
 const changeAddr = [
-    [EDGE_EARTH_IP, EDGE_JUPITER_PORT],
-    [EDGE_JUPITER_IP, EDGE_EARTH_PORT]
+    [EDGE_EARTH_IP, EDGE_EARTH_PORT],
+    [EDGE_JUPITER_IP, EDGE_JUPITER_PORT]
 ];
 const handOffScript = [
     'sh bash/route_to_earth.sh',
@@ -34,14 +34,19 @@ const STRATEGY_BEFORE_I_FRAME = 3;
 const STRATEGY_AFTER_I_FRAME = 4;
 
 
+let count = 0;
+
 let rtmp_polling_client = new NodeRtmpEdgeChangeClient(
     'rtmp://' + POLL_FROM_ME + '/live/wins',
     "blue_send"
 );
 let publisher = new NodeRtmpEdgeChangeClient('rtmp://' +
-    changeAddr[1][0] + '/live/wins2', 'blue-publisher');
+    changeAddr[(count + 1)%changeAddr.length][0] + '/live/wins2', 'blue-publisher');
+ if (!LOCAL_TEST) {
+	 myShellScript = exec(handOffScript[(count+1) % handOffScript.length]);
+ }
 
-let count = 0;
+
 let timeoutId = -1;
 
 publisher.setEdgeChangeStrategy(parseInt(process.argv[2]));
@@ -50,17 +55,19 @@ setInterval(() => {
     if (timeoutId != -1) {
         clearTimeout(timeoutId);
     }
-    if (!LOCAL_TEST) {
-        myShellScript = exec(handOffScript[count % handOffScript.length]);
-        myShellScript.stdout.on('data', (data)=>{
-            console.log(data);
-        });
-    }
-    let addr = changeAddr[count++ % changeAddr.length];
+    let addr = changeAddr[count % changeAddr.length];
     console.log( research_utils.getTimestamp()  + " " +
         publisher.connection_id + " try to change addr! to " + [addr[0], addr[1]]);
 
     publisher.readyEdgeChange(addr[0], addr[1]);
+ 
+    if (!LOCAL_TEST) {
+     //   myShellScript = exec(handOffScript[count % handOffScript.length]);
+     //   myShellScript.stdout.on('data', (data)=>{
+     //       console.log(research_utils.getTimestampMicro() + " " + data);
+      //  });
+    }
+       count += 1;
 }, 20000);
 
 
