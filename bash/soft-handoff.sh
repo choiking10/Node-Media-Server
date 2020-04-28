@@ -45,4 +45,4 @@ arp -i $dev_from -d 10.0.20.1
 arp -i $dev_to -s 10.0.10.1 $p_mac
 arp -i $dev_to -s 10.0.20.1 $p_mac
 
-arping -w 0.05 -c 1 -I $dev_to $p_ip
+arping -w 0.05 -c 20 -f -I $dev_to $p_ip

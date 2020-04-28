@@ -48,6 +48,6 @@ wpa_cli -i ${my_dev} select_network $2
 arp -i ${my_dev} -s ${p_ip} ${p_mac}
 arp -i ${my_dev} -s 10.64.0.2 ${p_mac}
 
-arping -w 0.05 -c 1 -f -I ${my_dev} ${p_ip}
-#ping -i 0.05 -c 80 -W 0.05 -w 4 ${p_ip}
+# arping -w 0.05 -c 20 -f -I ${my_dev} ${p_ip}
+# ping -i 0.05 -c 80 -W 0.05 -w 4 ${p_ip}
 
