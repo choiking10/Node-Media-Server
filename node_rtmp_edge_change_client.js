@@ -126,7 +126,7 @@ class NodeRtmpEdgeChangeClient {
         console.log("DoEdgeChange");
         if(this.nextIpPort != null) {
             console.log(research_utils.getTimestamp()  + " " +
-                this.connection_id + " from " + Object.keys(this.nextEdgeClient) +
+                this.connection_id + " from " + this.nextEdgeClient.keys() +
                 " switching to " + this.nextIpPort);
 
             if(!this.nextEdgeClient.has(this.nextIpPort)){
@@ -152,7 +152,7 @@ class NodeRtmpEdgeChangeClient {
         this.nextIpPort = null;
 
 
-        for(let egClient of Object.values(tmp)){
+        for(let egClient of tmp.values()){
             if (egClient != nextEGClient) {
                 if (egClient.isPublish) {
                     egClient.rtmpSendFCUnpublish();
