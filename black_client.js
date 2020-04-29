@@ -1,8 +1,20 @@
 
 let LOCAL_TEST = false;
 
+let POLL_FROM_ME = "127.0.0.1";
 let EDGE_JUPITER_IP = "10.0.10.1";
+let EDGE_EARTH_IP = "10.0.20.1";
 let EDGE_JUPITER_PORT = 1935;
+let EDGE_EARTH_PORT = 1935;
+
+const changeAddr = [
+    [EDGE_EARTH_IP, EDGE_EARTH_PORT],
+    [EDGE_JUPITER_IP, EDGE_JUPITER_PORT]
+];
+
+let count = 0;
+
+
 
 
 if(LOCAL_TEST) {
@@ -20,7 +32,7 @@ let pull_jupiter = new NodeRtmpEdgeChangeClient(
     "black"
 );
 
-let push_jupiter = new NodeRtmpEdgeChangeClient('rtmp://' + EDGE_JUPITER_IP + '/live/wins3');
+let push_jupiter = new NodeRtmpEdgeChangeClient('rtmp://127.0.0.1/live/wins3');
 // rtmp://143.248.55.86:31935/live/wins
 
 //let rtmp_pushing_to_server_client = new NodeRtmpClient('rtmp://' + push_addr + '/live/' + stream_key);
