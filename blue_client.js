@@ -9,6 +9,8 @@ const STRATEGY_AFTER_FIXED_TIME = 2;
 const STRATEGY_BEFORE_I_FRAME = 3;
 const STRATEGY_AFTER_I_FRAME = 4;
 
+const NUMBER_OF_NETWORK = 6;
+
 const LOCAL_TEST = true;
 
 let POLL_FROM_ME = "127.0.0.1";
@@ -79,8 +81,19 @@ function handoff(network_number) {
     dev_from = dev_name + dev_from;
     dev_to = dev_name + dev_to;
 
-    let softHandoffExec = "sh bash/soft-handoff.sh " +  dev_from + " " +  dev_to + " "  + network_number;
-    let linkChangeExec = "sh bash/change-link.sh " + dev_from + " " + (network_number + 1);
+    let present_net_number = network_number % ((NUMBER_OF_NETWORK - 1) * 2);
+    let next_net_number = (network_number + 1) % ((NUMBER_OF_NETWORK - 1) * 2);
+
+    if (present_net_number >= 5) {
+        present_net_number = ((NUMBER_OF_NETWORK - 1) * 2) - present_net_number;
+    }
+
+    if (next_net_number >= 5) {
+        next_net_number = ((NUMBER_OF_NETWORK - 1) * 2) - next_net_number;
+    }
+    
+    let softHandoffExec = "sh bash/soft-handoff.sh " +  dev_from + " " +  dev_to + " "  + present_net_number;
+    let linkChangeExec = "sh bash/change-link.sh " + dev_from + " " + next_net_number;
 
     console.log(research_utils.getTimestampMicro() + " " + softHandoffExec);
     console.log(research_utils.getTimestampMicro() + " " + linkChangeExec);
