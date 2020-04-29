@@ -126,7 +126,7 @@ class NodeRtmpEdgeChangeClient {
         console.log("DoEdgeChange");
         if(this.nextIpPort != null) {
             console.log(research_utils.getTimestamp()  + " " +
-                this.connection_id + " from " + this.nextEdgeClient.keys() +
+                this.connection_id + " from " + Array.from(this.nextEdgeClient.keys()) +
                 " switching to " + this.nextIpPort);
 
             if(!this.nextEdgeClient.has(this.nextIpPort)){
