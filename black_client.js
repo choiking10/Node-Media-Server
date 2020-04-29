@@ -54,8 +54,8 @@ async function run_pulling(pulling_client) {
         }
 
 
-        console.log(research_utils.getTimestamp() + " " +
-           pulling_client.connection_id + " I receive video (" + timestamp + ")")
+        //console.log(research_utils.getTimestamp() + " " +
+        //   pulling_client.connection_id + " I receive video (" + timestamp + ")")
         push_jupiter.pushVideo(videoData, timestamp);
     });
 
