@@ -130,7 +130,10 @@ class NodeRtmpEdgeChangeClient {
                 " switching to " + this.nextIpPort);
 
             if(!this.nextEdgeClient.has(this.nextIpPort)){
-                console.log(this.nextEdgeClient);
+                for(let egClient of this.nextEdgeClient.keys()){
+                    console.log(egClient);
+                }
+
                 throw new Error("next edge client has no present nextIpPort");
             }
 
