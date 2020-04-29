@@ -778,7 +778,6 @@ class NodeRtmpSession {
           rtmpChunks.writeUInt32LE(playerSession.playStreamId, 8);
           playerSession.res.write(rtmpChunks);
           playerSession.res.uncork();
-          console.log("send to " + this.players.size)
         }
       } else if (playerSession instanceof NodeFlvSession) {
         playerSession.res.write(flvTag, null, e => {
