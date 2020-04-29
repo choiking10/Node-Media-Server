@@ -32,26 +32,47 @@ if(LOCAL_TEST) {
 
 const changeAddr = [
     [EDGE_JUPITER_IP, EDGE_JUPITER_PORT],
+    [EDGE_JUPITER_IP, EDGE_JUPITER_PORT],
+    [EDGE_EARTH_IP, EDGE_EARTH_PORT],
     [EDGE_EARTH_IP, EDGE_EARTH_PORT],
     [EDGE_MOON_IP, EDGE_MOON_PORT],
+    [EDGE_MOON_IP, EDGE_MOON_PORT],
+    [EDGE_MOON_IP, EDGE_MOON_PORT],
     [EDGE_EARTH_IP, EDGE_EARTH_PORT],
+    [EDGE_EARTH_IP, EDGE_EARTH_PORT],
+    [EDGE_JUPITER_IP, EDGE_JUPITER_PORT],
 ];
 
 const candidateEdgesList = [
     [[EDGE_EARTH_IP, EDGE_EARTH_PORT],],
-    [[EDGE_MOON_IP, EDGE_MOON_PORT],],
     [[EDGE_EARTH_IP, EDGE_EARTH_PORT],],
-    [[EDGE_MOON_IP, EDGE_MOON_PORT],],
+    [[EDGE_JUPITER_IP, EDGE_JUPITER_PORT],[EDGE_MOON_IP, EDGE_MOON_PORT],],
+    [[EDGE_JUPITER_IP, EDGE_JUPITER_PORT],[EDGE_MOON_IP, EDGE_MOON_PORT],],
+    [[EDGE_EARTH_IP, EDGE_EARTH_PORT],],
+    [[EDGE_EARTH_IP, EDGE_EARTH_PORT],],
+    [[EDGE_EARTH_IP, EDGE_EARTH_PORT],],
+    [[EDGE_JUPITER_IP, EDGE_JUPITER_PORT],[EDGE_MOON_IP, EDGE_MOON_PORT],],
+    [[EDGE_JUPITER_IP, EDGE_JUPITER_PORT],[EDGE_MOON_IP, EDGE_MOON_PORT],],
+    [[EDGE_EARTH_IP, EDGE_EARTH_PORT],],
+];
+const netNumberList = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1]
+const devName = [
+    'wlan0',
+    'wlan1'
 ];
 
-const initHandOffSequence = [
-    '/bin/bash bash/change-link.sh wlan0 0',
-    '/bin/bash bash/change-link.sh wlan1 1',
-    '/bin/bash bash/soft-handoff.sh wlan1 wlan0 0',
-];
 
 let net_number = 0;
 let timeoutId = -1;
+
+const fromDev = devName[net_number % 2];
+const toDev = devName[(net_number + 1) % 2];
+
+const initHandOffSequence = [
+    '/bin/bash bash/change-link.sh ' + devName[net_number % 2] + " " + netNumberList[net_number % 10],
+    '/bin/bash bash/change-link.sh ' + devName[(net_number+1) % 2] + " " + netNumberList[(net_number+1) % 10],
+    '/bin/bash bash/soft-handoff.sh ' + toDev + " " + fromDev + " " + netNumberList[net_number % 10],
+];
 
 let rtmp_polling_client = new NodeRtmpEdgeChangeClient(
     'rtmp://' + POLL_FROM_ME + '/live/wins',
@@ -60,7 +81,7 @@ let rtmp_polling_client = new NodeRtmpEdgeChangeClient(
 let publisher = new NodeRtmpEdgeChangeClient('rtmp://' +
     changeAddr[Math.floor(net_number / 2) % changeAddr.length][0] + '/live/wins2', 'blue-publisher');
 
-publisher.setEdgeChangeStrategy(parseInt("1"));
+publisher.setEdgeChangeStrategy(1);
 
 for(let cmd of initHandOffSequence) {
     if(!LOCAL_TEST) {
@@ -70,30 +91,20 @@ for(let cmd of initHandOffSequence) {
 }
 
 function handoff(network_number) {
-    let dev_name = "wlan";
-    let dev_from = 1;
-    let dev_to = 0;
+    let from_net = network_number - 1;
+    let to_net = network_number;
+    let next_net = network_number + 1;
 
-    if(network_number % 2 != 0){
-        dev_from = 0;
-        dev_to = 1;
-    }
-    dev_from = dev_name + dev_from;
-    dev_to = dev_name + dev_to;
+    let dev_from = devName[from_net % 2];
+    let dev_to = devName[to_net % 2];
+    let dev_next = devName[next_net % 2];
 
-    let present_net_number = network_number % ((NUMBER_OF_NETWORK - 1) * 2);
-    let next_net_number = (network_number+1) % ((NUMBER_OF_NETWORK - 1) * 2);
+    from_net = netNumberList[from_net % 10];
+    to_net = netNumberList[to_net % 10];
+    next_net = netNumberList[next_net % 10];
 
-    if (present_net_number >= 5) {
-        present_net_number = ((NUMBER_OF_NETWORK - 1) * 2) - present_net_number;
-    }
-
-    if (next_net_number >= 5) {
-        next_net_number = ((NUMBER_OF_NETWORK - 1) * 2) - next_net_number;
-    }
-    
-    let softHandoffExec = "/bin/bash bash/soft-handoff.sh " +  dev_from + " " +  dev_to + " "  + present_net_number;
-    let linkChangeExec = "/bin/bash bash/change-link.sh " + dev_from + " " + next_net_number;
+    let linkChangeExec = "/bin/bash bash/change-link.sh " + dev_next + " " + next_net;
+    let softHandoffExec = "/bin/bash bash/soft-handoff.sh " +  dev_from + " " +  dev_to + " "  + to_net;
 
     console.log(research_utils.getTimestampMicro() + " " + softHandoffExec);
     console.log(research_utils.getTimestampMicro() + " " + linkChangeExec);
@@ -113,21 +124,22 @@ setInterval(() => {
         clearTimeout(timeoutId);
     }
     net_number += 1;
+    handoff(net_number);
+    setTimeout( () => {
+    let candidateEdges = candidateEdgesList[(net_number-1) % candidateEdgesList.length];
 
-    let candidateEdges = candidateEdgesList[
-        Math.floor((net_number-1) / 2) % candidateEdgesList.length
-    ];
     console.log(research_utils.getTimestamp()  + " " +
         publisher.connection_id + " try to change addr! to " + candidateEdges);
 
-    if(Math.floor(net_number/2) != Math.floor((net_number-1)/2) ){
-        let [ip, port] = changeAddr[Math.floor(net_number / 2) % changeAddr.length];
+    
+    if(!(changeAddr[net_number % changeAddr.length][0] == changeAddr[(net_number-1) % changeAddr.length][0] &&
+       changeAddr[net_number % changeAddr.length][1] == changeAddr[(net_number-1) % changeAddr.length][1]) ){
+        let [ip, port] = changeAddr[net_number % changeAddr.length];
+        console.log(research_utils.getTimestamp()  +" " + net_number + " set ip and port " + ip + " " + port);
         publisher.setNextIpPort(ip, port);
-        console.log(research_utils.getTimestamp()  + " set ip and port " + ip + " " + port);
     }
     publisher.readyEdgeChange(candidateEdges);
-
-    handoff(net_number);
+    }, 100);
 }, 20000);
 
 
