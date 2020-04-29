@@ -125,7 +125,7 @@ class NodeRtmpEdgeChangeClient {
             this.edgeChangeHandler();
         }
     }
-    DoEdgeChange() {
+    async DoEdgeChange() {
         if(this.nextEdgeClient == null) {
             return;
         }
