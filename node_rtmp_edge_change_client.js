@@ -123,7 +123,7 @@ class NodeRtmpEdgeChangeClient {
             return;
         }
         let nextEGClient = null;
-
+        console.log("DoEdgeChange");
         if(this.nextIpPort != null) {
             console.log(research_utils.getTimestamp()  + " " +
                 this.connection_id + " from " + Object.keys(this.nextEdgeClient) +
