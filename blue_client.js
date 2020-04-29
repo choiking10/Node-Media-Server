@@ -11,7 +11,7 @@ const STRATEGY_AFTER_I_FRAME = 4;
 
 const NUMBER_OF_NETWORK = 6;
 
-const LOCAL_TEST = true;
+const LOCAL_TEST = false;
 
 let POLL_FROM_ME = "127.0.0.1";
 let EDGE_JUPITER_IP = "10.0.10.1";
@@ -45,12 +45,12 @@ const candidateEdgesList = [
 ];
 
 const initHandOffSequence = [
-    'sh bash/change-link.sh wlan0 0',
-    'sh bash/change-link.sh wlan1 1',
-    'sh bash/soft-handoff.sh wlan1 wlan0 0',
+    '/bin/bash bash/change-link.sh wlan0 0',
+    '/bin/bash bash/change-link.sh wlan1 1',
+    '/bin/bash bash/soft-handoff.sh wlan1 wlan0 0',
 ];
 
-let net_number = 1;
+let net_number = 0;
 let timeoutId = -1;
 
 let rtmp_polling_client = new NodeRtmpEdgeChangeClient(
@@ -71,18 +71,18 @@ for(let cmd of initHandOffSequence) {
 
 function handoff(network_number) {
     let dev_name = "wlan";
-    let dev_from = 0;
-    let dev_to = 1;
+    let dev_from = 1;
+    let dev_to = 0;
 
     if(network_number % 2 != 0){
-        dev_from = 1;
-        dev_to = 0;
+        dev_from = 0;
+        dev_to = 1;
     }
     dev_from = dev_name + dev_from;
     dev_to = dev_name + dev_to;
 
     let present_net_number = network_number % ((NUMBER_OF_NETWORK - 1) * 2);
-    let next_net_number = (network_number + 1) % ((NUMBER_OF_NETWORK - 1) * 2);
+    let next_net_number = (network_number+1) % ((NUMBER_OF_NETWORK - 1) * 2);
 
     if (present_net_number >= 5) {
         present_net_number = ((NUMBER_OF_NETWORK - 1) * 2) - present_net_number;
@@ -92,8 +92,8 @@ function handoff(network_number) {
         next_net_number = ((NUMBER_OF_NETWORK - 1) * 2) - next_net_number;
     }
     
-    let softHandoffExec = "sh bash/soft-handoff.sh " +  dev_from + " " +  dev_to + " "  + present_net_number;
-    let linkChangeExec = "sh bash/change-link.sh " + dev_from + " " + next_net_number;
+    let softHandoffExec = "/bin/bash bash/soft-handoff.sh " +  dev_from + " " +  dev_to + " "  + present_net_number;
+    let linkChangeExec = "/bin/bash bash/change-link.sh " + dev_from + " " + next_net_number;
 
     console.log(research_utils.getTimestampMicro() + " " + softHandoffExec);
     console.log(research_utils.getTimestampMicro() + " " + linkChangeExec);
