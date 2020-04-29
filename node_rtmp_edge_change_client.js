@@ -78,7 +78,7 @@ class NodeRtmpEdgeChangeClient {
     }
     async readyEdgeChange(candidateEdges) {
         let _this = this;
-        this.nextEdgeClient = {};
+        this.nextEdgeClient = new Map();
         if(this.activeClient.isPublish){
             this.activeClient.sendEdgeChangeMessage(candidateEdges);
         }
@@ -112,7 +112,7 @@ class NodeRtmpEdgeChangeClient {
 
                 egClient.startPull();
             }
-            this.nextEdgeClient[ipAndPort] = egClient;
+            this.nextEdgeClient.set(ipAndPort, egClient);
         }
         if(this.activeClient.isPublish) {
             this.edgeChangeHandler();
@@ -123,11 +123,18 @@ class NodeRtmpEdgeChangeClient {
             return;
         }
         let nextEGClient = null;
+
         if(this.nextIpPort != null) {
             console.log(research_utils.getTimestamp()  + " " +
-                this.connection_id + " switching to " + this.nextIpPort);
+                this.connection_id + " from " + Object.keys(this.nextEdgeClient) +
+                " switching to " + this.nextIpPort);
 
-            nextEGClient = this.nextEdgeClient[this.nextIpPort];
+            if(!this.nextEdgeClient.has(this.nextIpPort)){
+                console.log(this.nextEdgeClient);
+                throw new Error("next edge client has no present nextIpPort");
+            }
+
+            nextEGClient = this.nextEdgeClient.get(this.nextIpPort);
 
             for(let key in this.callback) {
                 nextEGClient.on(key, this.callback[key]);
