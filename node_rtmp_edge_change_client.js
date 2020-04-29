@@ -49,6 +49,7 @@ class NodeRtmpEdgeChangeClient {
     }
     setNextIpPort(ip, port) {
         this.nextIpPort = ip + ":" + port;
+        console.log("set next IP and Port " + this.nextIpPort)
     }
     edgeChangeHandler() {
         let _this = this;
