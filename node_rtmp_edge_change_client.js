@@ -27,16 +27,15 @@ class NodeRtmpEdgeChangeClient {
         this.cache = new Set();
         this.frame_count = 0;
         this.bef_time_stamp = -1;
+        this.nextIpPort = null;
+        this.doEdgeTimerId = -1;
 
         let _this = this;
-        this.activeClient.on('edge_change', (ip, port) => {
-            _this.readyEdgeChange(ip, port);
+        this.activeClient.on('edge_change', (candidateEdges) => {
+            _this.readyEdgeChange(candidateEdges);
             console.log(research_utils.getTimestamp() + " " +
-                this.connection_id + " viewer will exchange to " + [ip, port]);
+                this.connection_id + " viewer will exchange to " + candidateEdges);
         });
-        this.activeClient.on('video', (videoData, timestamp) => {
-            _this.bef_time_stamp = timestamp;
-        })
     }
 
     on(event, callback){
@@ -48,77 +47,116 @@ class NodeRtmpEdgeChangeClient {
         this.edge_change_strategy = strategy_name;
         this.edge_change_value = value;
     }
+    setNextIpPort(ip, port) {
+        this.nextIpPort = ip + ":" + port;
+    }
     edgeChangeHandler() {
         let _this = this;
         switch ((this.edge_change_strategy)) {
             case STRATEGY_AFTER_FIXED_TIME:
-                setTimeout(()=> _this.DoEdgeChange(), this.edge_change_value);
                 console.log("STRATEGY_AFTER_FIXED_TIME");
+                setTimeout(()=> _this.DoEdgeChange(), this.edge_change_value);
                 break;
             case STRATEGY_HARD_HAND_OFF:
-                this.DoEdgeChange();
                 console.log("STRATEGY_HARD_HAND_OFF");
+                this.DoEdgeChange();
                 break;
             case STRATEGY_AFTER_I_FRAME:
-                this.ready_change = true;
                 console.log("STRATEGY_AFTER_I_FRAME");
+                this.ready_change = true;
                 break;
             case STRATEGY_BEFORE_I_FRAME:
-                this.ready_change = true;
                 console.log("STRATEGY_BEFORE_I_FRAME");
+                this.ready_change = true;
                 break;
 
             case STRATEGY_NOT_NEAR_I_FRAME:
-                setTimeout(()=> _this.ready_change = true, 100);
                 console.log("STRATEGY_NOT_NEAR_I_FRAME");
+                setTimeout(()=> _this.ready_change = true, 100);
                 break;
         }
     }
-    async readyEdgeChange(ip, port) {
-        console.log(research_utils.getTimestamp()  + " " +
-            this.connection_id + " ready to exchange to " + this.activeClient.url);
-
-        this.activeClient.sendEdgeChangeMessage(ip, port);
-        let presentInfo = Object.assign({}, this.activeClient.info);
-        this.nextEdgeClient = new NodeRtmpClient(
-            "rtmp://"+ip+":"+port+presentInfo.pathname,
-            this.activeClient.connection_id);
+    async readyEdgeChange(candidateEdges) {
         let _this = this;
-        this.nextEdgeClient.on('edge_change', (ip, port) => {
-            _this.readyEdgeChange(ip, port);
-            console.log(research_utils.getTimestamp()  + " " +
-                this.connection_id + "viewer will exchange to " + [ip, port]);
-        });
+        this.nextEdgeClient = {};
         if(this.activeClient.isPublish){
-            this.nextEdgeClient.startPush();
+            this.activeClient.sendEdgeChangeMessage(candidateEdges);
+        }
+        let presentInfo = Object.assign({}, this.activeClient.info);
+
+        for (let i =0; i < candidateEdges.length; i++){
+            let [ip, port] = candidateEdges[i];
+            let ipAndPort = ip+":"+port;
+            let rtmpUrl = "rtmp://"+ip+":"+port+presentInfo.pathname;
+            let egClient = new NodeRtmpClient(rtmpUrl,this.activeClient.connection_id);
+            console.log("connect to " + rtmpUrl);
+
+            if(this.activeClient.isPublish) {
+                // broadcaster
+                egClient.avcSequenceHeader = this.activeClient.avcSequenceHeader;
+                egClient.startPush();
+            } else {
+                // viewer
+                egClient.on('edge_change', (candidateEdgeList) => {
+                    _this.readyEdgeChange(candidateEdgeList);
+                    _this.doEdgeTimerId = setTimeout(() => _this.DoEdgeChange(), 5000);
+                    console.log(research_utils.getTimestamp()  + " " +
+                        this.connection_id + "viewer will change to " + candidateEdgeList);
+                });
+
+                egClient.launcher.once("video-arrive", (ip, port) => {
+                    console.log("I receive from " + ip +":" + port );
+                    _this.setNextIpPort(ip, port);
+                    _this.DoEdgeChange();
+                });
+
+                egClient.startPull();
+            }
+            this.nextEdgeClient[ipAndPort] = egClient;
+        }
+        if(this.activeClient.isPublish) {
             this.edgeChangeHandler();
         }
-        else {
-            let _this = this;
-            this.nextEdgeClient.launcher.once("video", (videoData, timestamp) => {
-                _this.DoEdgeChange();
-                _this.callback["video"](videoData, timestamp);
-            });
-
-            this.nextEdgeClient.startPull();
-        }
-
     }
     DoEdgeChange() {
         if(this.nextEdgeClient == null) {
-            console.log("directStart!");
-            this.directStart = true;
             return;
         }
-        for(let key in this.callback) {
-            this.nextEdgeClient.on(key, this.callback[key]);
+        let nextEGClient = null;
+        if(this.nextIpPort != null) {
+            console.log(research_utils.getTimestamp()  + " " +
+                this.connection_id + " switching to " + this.nextIpPort);
+
+            nextEGClient = this.nextEdgeClient[this.nextIpPort];
+
+            for(let key in this.callback) {
+                nextEGClient.on(key, this.callback[key]);
+            }
+            nextEGClient.avcSequenceHeader = this.activeClient.avcSequenceHeader;
+            this.activeClient.stop();
+            this.activeClient = nextEGClient;
+        } else {
+            // cancel edge switching
+            console.log(research_utils.getTimestamp()  + " " +
+                this.connection_id + " no switching");
         }
-        this.activeClient.stop();
-        this.nextEdgeClient.avcSequenceHeader = this.activeClient.avcSequenceHeader;
-        this.activeClient = this.nextEdgeClient;
+        let tmp = this.nextEdgeClient;
         this.nextEdgeClient = null;
-        console.log(research_utils.getTimestamp()  + " " +
-            this.connection_id + " exchange to " + this.activeClient.url);
+        this.nextIpPort = null;
+
+
+        for(let egClient of Object.values(tmp)){
+            if (egClient != nextEGClient) {
+                if (egClient.isPublish) {
+                    egClient.rtmpSendFCUnpublish();
+                }
+                egClient.rtmpSendDeleteStream();
+                egClient.socket.destroy();
+
+                console.log(research_utils.getTimestamp()  + " " +
+                    this.connection_id + " stop " + egClient.info.host);
+            }
+        }
 
     }
 

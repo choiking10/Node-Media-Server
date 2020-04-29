@@ -1,5 +1,5 @@
 
-let LOCAL_TEST = false;
+let LOCAL_TEST = true;
 
 let EDGE_JUPITER_IP = "10.0.10.1";
 let EDGE_JUPITER_PORT = 1935;
@@ -7,6 +7,7 @@ let EDGE_JUPITER_PORT = 1935;
 
 if(LOCAL_TEST) {
     EDGE_JUPITER_IP = "127.0.0.1";
+    EDGE_JUPITER_PORT = 1935;
 }
 
 const NodeRtmpEdgeChangeClient = require('./node_rtmp_edge_change_client');
@@ -54,7 +55,7 @@ async function run_pulling(pulling_client) {
 
 
         console.log(research_utils.getTimestamp() + " " +
-            pulling_client.connection_id + " I receive video (" + timestamp + ")")
+           pulling_client.connection_id + " I receive video (" + timestamp + ")")
         push_jupiter.pushVideo(videoData, timestamp);
     });
 

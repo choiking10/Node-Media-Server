@@ -677,6 +677,7 @@ class NodeRtmpClient {
   rtmpVideoHandler() {
     let payload = this.parserPacket.payload.slice(0, this.parserPacket.header.length);
     this.launcher.emit('video', payload, this.parserPacket.clock);
+    this.launcher.emit('video-arrive', this.info.hostname, this.info.port);
   }
 
   rtmpDataHandler() {
@@ -757,12 +758,12 @@ class NodeRtmpClient {
     this.sendInvokeMessage(this.streamId, opt);
   }
 
-  sendEdgeChangeMessage(ip, port) {
+  sendEdgeChangeMessage(candidateEdges) {
     let packet = RtmpPacket.create();
     packet.header.fmt = RTMP_CHUNK_TYPE_0;
     packet.header.cid = RTMP_CHANNEL_PROTOCOL;
     packet.header.type = RTMP_TYPE_EDGE_SWITCH;
-    packet.payload = this.ipToBuffer(ip, port);
+    packet.payload = this.ipToBuffer(candidateEdges);
     packet.header.length = packet.payload.length;
     packet.header.stream_id = this.streamId;
     let chunks = this.rtmpChunksCreate(packet);
@@ -770,30 +771,38 @@ class NodeRtmpClient {
     this.socket.uncork();
   }
 
-  ipToBuffer(ip, port) {
-    let buffer = Buffer.alloc(6);
-    ip.split('.').map((octet, index, array) => {
-      buffer.writeUInt8(parseInt(octet), index);
-    });
-    buffer.writeUInt16BE(port, 4);
+  ipToBuffer(candidateEdges) {
+    let buffer = Buffer.alloc(candidateEdges.length * 6);
+    let offset =0;
+    for (let [ip, port] of candidateEdges) {
+      ip.split('.').map((octet, index, array) => {
+        buffer.writeUInt8(parseInt(octet), offset + index);
+      });
+      buffer.writeUInt16BE(port, offset + 4);
+      offset += 6;
+    }
     return buffer
   }
 
-  BufferToIpString(ipBuffer) {
-    let ip = ipBuffer.slice(0,4).map((octet, index, array) => {
-      return octet.toString()
-    }).reduce((prev, curr) => {
-      return prev + "." + curr
-    });
-    let port = ipBuffer.slice(4,6).readUInt16BE(0);
-    return [ip, port]
+  BufferToIpString(candidateEdgesBuffer) {
+    let candidateEdges = [];
+    for(let i = 0; i < candidateEdgesBuffer.length; i += 6) {
+      let ip = candidateEdgesBuffer.slice(i,i + 4).map((octet, index, array) => {
+        return octet.toString();
+      }).reduce((prev, curr) => {
+        return prev + "." + curr;
+      });
+      let port = candidateEdgesBuffer.slice(i + 4, i + 6).readUInt16BE(0);
+      candidateEdges.push([ip, port]);
+    }
+    return candidateEdges
   }
 
   rtmpEdgeSwitchHandler() {
     let payload = this.parserPacket.payload.slice(0, this.parserPacket.header.length);
-    let [ip, port] = this.BufferToIpString(payload);
-    this.launcher.emit("edge_change", ip, port);
-    console.log(research_utils.getTimestamp() + " ip: " + ip +" port: "+ port +" receive! -- client");
+    let candidateEdges = this.BufferToIpString(payload);
+    this.launcher.emit("edge_change", candidateEdges);
+    console.log(research_utils.getTimestamp() + candidateEdges + "receive! -- client");
   }
 
   rtmpSendSetBufferLength(bufferTime) {
