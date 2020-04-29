@@ -33,8 +33,11 @@ class NodeRtmpEdgeChangeClient {
         let _this = this;
         this.activeClient.on('edge_change', (candidateEdges) => {
             _this.readyEdgeChange(candidateEdges);
-            console.log(research_utils.getTimestamp() + " " +
-                this.connection_id + " viewer will exchange to " + candidateEdges);
+            _this.doEdgeTimerId = setTimeout(
+                () => _this.DoEdgeChange(),
+                5000);
+            console.log(research_utils.getTimestamp()  + " " +
+                this.connection_id + "viewer will change to " + candidateEdges);
         });
     }
 
@@ -81,6 +84,7 @@ class NodeRtmpEdgeChangeClient {
         let _this = this;
         this.nextEdgeClient = new Map();
         if(this.activeClient.isPublish){
+            console.log("send edge change message");
             this.activeClient.sendEdgeChangeMessage(candidateEdges);
         }
         let presentInfo = Object.assign({}, this.activeClient.info);
@@ -100,7 +104,9 @@ class NodeRtmpEdgeChangeClient {
                 // viewer
                 egClient.on('edge_change', (candidateEdgeList) => {
                     _this.readyEdgeChange(candidateEdgeList);
-                    _this.doEdgeTimerId = setTimeout(() => _this.DoEdgeChange(), 5000);
+                    _this.doEdgeTimerId = setTimeout(
+                        () => _this.DoEdgeChange(),
+                        5000);
                     console.log(research_utils.getTimestamp()  + " " +
                         this.connection_id + "viewer will change to " + candidateEdgeList);
                 });
