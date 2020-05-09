@@ -131,6 +131,7 @@ class NodeRtmpClient {
 
     this.inChunkSize = RTMP_CHUNK_SIZE;
     this.outChunkSize = RTMP_CHUNK_SIZE;
+    this.hand_off_if = "";
 
     this.streamId = 0;
     this.isSendAvcSequenceHeader = false;
@@ -802,7 +803,7 @@ class NodeRtmpClient {
     let payload = this.parserPacket.payload.slice(0, this.parserPacket.header.length);
     let candidateEdges = this.BufferToIpString(payload);
     this.launcher.emit("edge_change", candidateEdges);
-    console.log(research_utils.getTimestamp() + candidateEdges + "receive! -- client");
+    console.log(research_utils.getTimestamp() + " "+ candidateEdges + "receive! -- client");
   }
 
   rtmpSendSetBufferLength(bufferTime) {

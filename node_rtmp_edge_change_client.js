@@ -29,6 +29,7 @@ class NodeRtmpEdgeChangeClient {
         this.bef_time_stamp = -1;
         this.nextIpPort = null;
         this.doEdgeTimerId = -1;
+        this.hand_off_if = "";
 
         let _this = this;
         this.activeClient.on('edge_change', (candidateEdges) => {
@@ -46,6 +47,10 @@ class NodeRtmpEdgeChangeClient {
         this.activeClient.on(event, callback);
     }
 
+    setHandOffInterface(if_name) {
+        this.hand_off_if = if_name;
+    }
+
     setEdgeChangeStrategy(strategy_name, value=1000) {
         this.edge_change_strategy = strategy_name;
         this.edge_change_value = value;
@@ -59,7 +64,7 @@ class NodeRtmpEdgeChangeClient {
         switch ((this.edge_change_strategy)) {
             case STRATEGY_AFTER_FIXED_TIME:
                 console.log("STRATEGY_AFTER_FIXED_TIME");
-                setTimeout(()=> _this.DoEdgeChange(), this.edge_change_value);
+                setTimeout(()=> _this.DoEdgeChange(), 150);
                 break;
             case STRATEGY_HARD_HAND_OFF:
                 console.log("STRATEGY_HARD_HAND_OFF");
@@ -225,7 +230,8 @@ class NodeRtmpEdgeChangeClient {
                 timestamp,
                 videoData.length,
                 research_utils.getTimestampMicro(),
-                frame_type
+                frame_type,
+                this.hand_off_if
             );
         }
 
