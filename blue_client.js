@@ -81,7 +81,7 @@ let rtmp_polling_client = new NodeRtmpEdgeChangeClient(
 let publisher = new NodeRtmpEdgeChangeClient('rtmp://' +
     changeAddr[Math.floor(net_number / 2) % changeAddr.length][0] + '/live/wins2', 'blue-publisher');
 
-publisher.setEdgeChangeStrategy(1);
+publisher.setEdgeChangeStrategy(2);
 
 for(let cmd of initHandOffSequence) {
     if(!LOCAL_TEST) {
@@ -139,7 +139,7 @@ setInterval(() => {
         publisher.setNextIpPort(ip, port);
     }
     publisher.readyEdgeChange(candidateEdges);
-    }, 100);
+    }, 50);
 }, 20000);
 
 
