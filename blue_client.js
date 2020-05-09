@@ -69,8 +69,8 @@ const fromDev = devName[net_number % 2];
 const toDev = devName[(net_number + 1) % 2];
 
 const initHandOffSequence = [
-    '/bin/bash bash/change-link.sh ' + devName[net_number % 2] + " " + netNumberList[net_number % 10],
-    '/bin/bash bash/change-link.sh ' + devName[(net_number+1) % 2] + " " + netNumberList[(net_number+1) % 10],
+    '/bin/bash bash/change-link.sh ' + fromDev + " " + netNumberList[net_number % 10],
+    '/bin/bash bash/change-link.sh ' + toDev + " " + netNumberList[(net_number+1) % 10],
     '/bin/bash bash/soft-handoff.sh ' + toDev + " " + fromDev + " " + netNumberList[net_number % 10],
 ];
 
@@ -82,6 +82,7 @@ let publisher = new NodeRtmpEdgeChangeClient('rtmp://' +
     changeAddr[Math.floor(net_number / 2) % changeAddr.length][0] + '/live/wins2', 'blue-publisher');
 
 publisher.setEdgeChangeStrategy(2);
+publisher.setHandOffInterface(fromDev);
 
 for(let cmd of initHandOffSequence) {
     if(!LOCAL_TEST) {
@@ -89,6 +90,17 @@ for(let cmd of initHandOffSequence) {
     }
     console.log(cmd);
 }
+
+research_utils.appendLogForMessage(
+    publisher.connection_id,
+    publisher.activeClient.url,
+    'Start',
+    -1,
+    0,
+    research_utils.getTimestampMicro(),
+    publisher.hand_off_if
+);
+
 
 function handoff(network_number) {
     let from_net = network_number - 1;

@@ -43,7 +43,7 @@ function appendLog(data, filename="text"){
     });
 }
 function appendLogForMessage(id, url, event_name, timestamp, length,
-                             real_timestamp, frameType=0, filename=null) {
+                             real_timestamp, frameType=0, wif="", filename=null) {
     if (filename == null){
         filename = id;
     }
@@ -55,6 +55,7 @@ function appendLogForMessage(id, url, event_name, timestamp, length,
         length,
         frameType,
         real_timestamp,
+        wif,
     ], filename)
 }
 

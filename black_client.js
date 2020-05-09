@@ -35,7 +35,19 @@ let push_jupiter = new NodeRtmpEdgeChangeClient('rtmp://' + EDGE_JUPITER_IP + '/
 * */
 
 
+
 async function run_pulling(pulling_client) {
+
+    research_utils.appendLogForMessage(
+        pulling_client.connection_id,
+        pulling_client.activeClient.url,
+        'Start',
+        -1,
+        0,
+        research_utils.getTimestampMicro(),
+        -1
+    );
+
     pulling_client.on('video', (videoData, timestamp) => {
 
         let frame_type = (videoData[0] >> 4) & 0x0f;
