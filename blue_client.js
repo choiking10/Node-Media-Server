@@ -127,6 +127,7 @@ function handoff(network_number) {
             console.log(research_utils.getTimestampMicro() + " " + data);
         });
         exec(linkChangeExec);
+        publisher.setHandOffInterface(dev_to);
     }
 }
 
