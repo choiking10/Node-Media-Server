@@ -46,7 +46,8 @@ let push_jupiter = new NodeRtmpEdgeChangeClient('rtmp://127.0.0.1/live/wins3');
 * rtmp_polling_from_server_client
 * */
 
-
+let bef = 0;
+let flag = true;
 
 async function run_pulling(pulling_client) {
 
@@ -65,7 +66,7 @@ async function run_pulling(pulling_client) {
         let frame_type = (videoData[0] >> 4) & 0x0f;
         let codec_id = videoData[0] & 0x0f;
 
-        if(!(frame_type == 1 && videoData[1] ==0 && codec_id == 7)){
+        if(!(frame_type == 1 && videoData[1] == 0 && codec_id == 7)){
             research_utils.appendLogForMessage(
                 pulling_client.connection_id,
                 pulling_client.activeClient.url,
@@ -75,11 +76,15 @@ async function run_pulling(pulling_client) {
                 research_utils.getTimestampMicro(),
                 (videoData[0] >> 4) & 0x0f
             );
+       }
+      console.log(research_utils.getTimestamp() + " " +
+             pulling_client.connection_id + " I receive video (" + timestamp + ")")
+        
+        if(timestamp == 0) {
+               console.log("time stamp is 0");
         }
-
-
-        //console.log(research_utils.getTimestamp() + " " +
-        //   pulling_client.connection_id + " I receive video (" + timestamp + ")")
+ 
+        bef = timestamp;
         push_jupiter.pushVideo(videoData, timestamp);
     });
 
