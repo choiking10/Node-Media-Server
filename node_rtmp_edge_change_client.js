@@ -64,7 +64,7 @@ class NodeRtmpEdgeChangeClient {
         switch ((this.edge_change_strategy)) {
             case STRATEGY_AFTER_FIXED_TIME:
                 console.log("STRATEGY_AFTER_FIXED_TIME");
-                setTimeout(()=> _this.DoEdgeChange(), 150);
+                setTimeout(()=> _this.DoEdgeChange(), 1000);
                 break;
             case STRATEGY_HARD_HAND_OFF:
                 console.log("STRATEGY_HARD_HAND_OFF");

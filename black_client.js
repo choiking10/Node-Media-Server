@@ -20,7 +20,7 @@ let pull_jupiter = new NodeRtmpEdgeChangeClient(
     "black"
 );
 
-let push_jupiter = new NodeRtmpEdgeChangeClient('rtmp://' + EDGE_JUPITER_IP + '/live/wins3');
+let push_jupiter = new NodeRtmpEdgeChangeClient('rtmp://' + "127.0.0.1" + '/live/wins3');
 // rtmp://143.248.55.86:31935/live/wins
 
 //let rtmp_pushing_to_server_client = new NodeRtmpClient('rtmp://' + push_addr + '/live/' + stream_key);
@@ -66,8 +66,8 @@ async function run_pulling(pulling_client) {
         }
 
 
-        //console.log(research_utils.getTimestamp() + " " +
-        //   pulling_client.connection_id + " I receive video (" + timestamp + ")")
+        console.log(research_utils.getTimestamp() + " " +
+           pulling_client.connection_id + " I receive video (" + timestamp + ")")
         push_jupiter.pushVideo(videoData, timestamp);
     });
 
