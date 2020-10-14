@@ -131,7 +131,7 @@ function handoff(network_number) {
     }
 }
 
-
+/*
 setInterval(() => {
     if (timeoutId != -1) {
         clearTimeout(timeoutId);
@@ -154,7 +154,7 @@ setInterval(() => {
     publisher.readyEdgeChange(candidateEdges);
     }, 50);
 }, 20000);
-
+*/
 
 rtmp_polling_client.on('video', (videoData, timestamp) => {
     publisher.pushVideo(videoData, timestamp);
