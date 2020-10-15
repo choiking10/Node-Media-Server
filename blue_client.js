@@ -79,7 +79,7 @@ let rtmp_polling_client = new NodeRtmpEdgeChangeClient(
     "blue_send"
 );
 let publisher = new NodeRtmpEdgeChangeClient('rtmp://' +
-    changeAddr[Math.floor(net_number / 2) % changeAddr.length][0] + '/live/wins2', 'blue-publisher');
+    changeAddr[Math.floor(net_number / 2) % changeAddr.length][0] + '/live/wins2', 'blue-publisher', true);
 
 publisher.setEdgeChangeStrategy(2);
 publisher.setHandOffInterface(fromDev);

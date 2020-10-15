@@ -14,10 +14,11 @@ const EDGE_CHANGE_READY = 0;
 
 
 class NodeRtmpEdgeChangeClient {
-    constructor(rtmpUrl, connection_id="no_id") {
+    constructor(rtmpUrl, connection_id="no_id", secure_mode = false) {
         this.url = rtmpUrl;
         this.connection_id = connection_id;
-        this.activeClient = new NodeRtmpClient(rtmpUrl, connection_id);
+		this.secure_mode = secure_mode;
+        this.activeClient = new NodeRtmpClient(rtmpUrl, connection_id, secure_mode);
         this.nextEdgeClient = null;
         this.callback = {};
         this.directStart = false;
