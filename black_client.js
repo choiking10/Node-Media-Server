@@ -29,8 +29,9 @@ const stream_key = "wins2";
 
 let pull_jupiter = new NodeRtmpEdgeChangeClient(
     'rtmp://' + EDGE_JUPITER_IP + '/live/' + stream_key,
-    "black"
-);
+    "black",
+    true
+);//tls
 
 let push_jupiter = new NodeRtmpEdgeChangeClient('rtmp://127.0.0.1/live/wins3');
 // rtmp://143.248.55.86:31935/live/wins
@@ -77,9 +78,10 @@ async function run_pulling(pulling_client) {
                 (videoData[0] >> 4) & 0x0f
             );
        }
-      console.log(research_utils.getTimestamp() + " " +
+      /*
+        console.log(research_utils.getTimestamp() + " " +
              pulling_client.connection_id + " I receive video (" + timestamp + ")")
-        
+      */  
         if(timestamp == 0) {
                console.log("time stamp is 0");
         }
