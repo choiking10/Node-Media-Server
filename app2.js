@@ -2,32 +2,12 @@ const NodeMediaServer = require('./');
 
 const config = {
   rtmp: {
-    port: 1935,
+    port: 1936,
     chunk_size: 4096,
     gop_cache: true,
     ping: 30,
     ping_timeout: 60
   },
-  http: {
-    port: 8000,
-    mediaroot: './media',
-    allow_origin: '*'
-  },
-
-  https: {
-    port: 8443,
-    key: './privatekey.pem',
-    cert: './certificate.pem',
-  },
-  auth: {
-    api: true,
-    api_user: 'admin',
-    api_pass: 'admin',
-    play: false,
-    publish: false,
-    secret: 'nodemedia2017privatekey'
-  }
-
 };
 
 /*
@@ -46,7 +26,6 @@ const config = {
   }
 
  */
-
 
 let nms = new NodeMediaServer(config)
 nms.run();

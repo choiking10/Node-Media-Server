@@ -4,12 +4,15 @@
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 
+const research_utils = require('./research_utils');
+
 const EventEmitter = require('events');
 const Logger = require('./node_core_logger');
 const Crypto = require('crypto');
 const Url = require('url');
 const Net = require('net');
 const AMF = require('./node_core_amf');
+const AV = require("./node_core_av");
 
 const FLASHVER = "LNX 9,0,124,2";
 const RTMP_OUT_CHUNK_SIZE = 60000;
@@ -71,6 +74,8 @@ const RTMP_TYPE_INVOKE = 20; // AMF0
 /* Aggregate Message */
 const RTMP_TYPE_METADATA = 22;
 
+const RTMP_TYPE_EDGE_SWITCH = 23;
+
 const RTMP_CHUNK_SIZE = 128;
 const RTMP_PING_TIME = 60000;
 const RTMP_PING_TIMEOUT = 30000;
@@ -105,9 +110,21 @@ const RtmpPacket = {
   }
 };
 
+//secure
+//const secure_mode = true;
+const fs = require('fs');
+const tls = require('tls');
+const options = {
+	key: fs.readFileSync('./server.pem'),
+	cert: fs.readFileSync('./server.crt')
+	//ca: fs.readFileSync('./csr.pem', 'utf8')
+};
+
 class NodeRtmpClient {
-  constructor(rtmpUrl) {
+  constructor(rtmpUrl, connection_id="no_id", secure_mode = false) {
     this.url = rtmpUrl;
+    this.connection_id = connection_id;
+	this.secure_mode = secure_mode;
     this.info = this.rtmpUrlParser(rtmpUrl);
     this.isPublish = false;
     this.launcher = new EventEmitter();
@@ -125,9 +142,13 @@ class NodeRtmpClient {
 
     this.inChunkSize = RTMP_CHUNK_SIZE;
     this.outChunkSize = RTMP_CHUNK_SIZE;
+    this.hand_off_if = "";
 
     this.streamId = 0;
+    this.isSendAvcSequenceHeader = false;
     this.isSocketOpen = false;
+
+    this.avcSequenceHeader = null;
   }
 
   onSocketData(data) {
@@ -205,6 +226,10 @@ class NodeRtmpClient {
     this.launcher.on(event, callback);
   }
 
+  removeListener(eventName , listener){
+    this.launcher.removeListener(eventName, listener);
+  }
+
   startPull() {
     this._start();
   }
@@ -215,7 +240,10 @@ class NodeRtmpClient {
   }
 
   _start() {
-    this.socket = Net.createConnection(this.info.port, this.info.hostname, () => {
+	  if (this.secure_mode) {
+		  console.log("node_rtmp_client secure init " + this.connection_id);
+	  process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
+	  this.socket = tls.connect(this.info.port, this.info.hostname, options, () => {
       //rtmp handshark c0c1
       let c0c1 = Crypto.randomBytes(1537);
       c0c1.writeUInt8(3);
@@ -223,7 +251,18 @@ class NodeRtmpClient {
       c0c1.writeUInt32BE(0, 5);
       this.socket.write(c0c1);
       // Logger.debug('[rtmp client] write c0c1');
-    });
+    });}
+	else {
+		console.log("node_rtmp_client init " + this.connection_id);
+	this.socket = Net.createConnection(this.info.port, this.info.hostname, () => {
+	let c0c1 = Crypto.randomBytes(1537);
+	c0c1.writeUInt8(3);
+	c0c1.writeUInt32BE(Date.now() / 1000, 1);
+	c0c1.writeUInt32BE(0, 5);
+	this.socket.write(c0c1);
+	});}
+
+
     this.socket.on('data', this.onSocketData.bind(this));
     this.socket.on('error', this.onSocketError.bind(this));
     this.socket.on('close', this.onSocketClose.bind(this));
@@ -256,6 +295,7 @@ class NodeRtmpClient {
     packet.header.timestamp = timestamp;
     let rtmpChunks = this.rtmpChunksCreate(packet);
     this.socket.write(rtmpChunks);
+    this.socket.uncork();
   }
 
   pushVideo(videoData, timestamp) {
@@ -269,6 +309,20 @@ class NodeRtmpClient {
     packet.header.timestamp = timestamp;
     let rtmpChunks = this.rtmpChunksCreate(packet);
     this.socket.write(rtmpChunks);
+    this.socket.uncork();
+
+    let payload = videoData;
+    let frame_type = (payload[0] >> 4) & 0x0f;
+    let codec_id = payload[0] & 0x0f;
+
+    if (codec_id == 7 || codec_id == 12) {
+      //cache avc sequence header
+      if (frame_type == 1 && payload[1] == 0) {
+        this.avcSequenceHeader = Buffer.alloc(payload.length);
+        payload.copy(this.avcSequenceHeader);
+        this.isSendAvcSequenceHeader = true;
+      }
+    }
   }
 
   pushScript(scriptData, timestamp) {
@@ -282,6 +336,7 @@ class NodeRtmpClient {
     packet.header.timestamp = timestamp;
     let rtmpChunks = this.rtmpChunksCreate(packet);
     this.socket.write(rtmpChunks);
+    this.socket.uncork();
   }
 
   rtmpUrlParser(url) {
@@ -388,6 +443,7 @@ class NodeRtmpClient {
     let size = 0;
     let offset = 0;
     let extended_timestamp = 0;
+    let bef = 0;
 
     while (offset < bytes) {
       switch (this.parserState) {
@@ -453,6 +509,7 @@ class NodeRtmpClient {
           this.parserPacket.bytes += size;
           offset += size;
 
+          bef = offset;
           if (this.parserPacket.bytes >= this.parserPacket.header.length) {
             this.parserState = RTMP_PARSE_INIT;
             this.parserPacket.bytes = 0;
@@ -540,6 +597,8 @@ class NodeRtmpClient {
       case RTMP_TYPE_FLEX_STREAM:// AMF3
       case RTMP_TYPE_DATA: // AMF0
         return this.rtmpDataHandler();
+      case RTMP_TYPE_EDGE_SWITCH:
+        return this.rtmpEdgeSwitchHandler();
     }
   }
 
@@ -593,7 +652,9 @@ class NodeRtmpClient {
         break;
     }
   }
+  rtmpEdgeChange(ip, port) {
 
+  }
   rtmpCommandOnresult(invokeMessage) {
     // Logger.debug(invokeMessage);
     switch (invokeMessage.transId) {
@@ -642,6 +703,7 @@ class NodeRtmpClient {
   rtmpVideoHandler() {
     let payload = this.parserPacket.payload.slice(0, this.parserPacket.header.length);
     this.launcher.emit('video', payload, this.parserPacket.clock);
+    this.launcher.emit('video-arrive', this.info.hostname, this.info.port);
   }
 
   rtmpDataHandler() {
@@ -722,6 +784,53 @@ class NodeRtmpClient {
     this.sendInvokeMessage(this.streamId, opt);
   }
 
+  sendEdgeChangeMessage(candidateEdges) {
+    let packet = RtmpPacket.create();
+    packet.header.fmt = RTMP_CHUNK_TYPE_0;
+    packet.header.cid = RTMP_CHANNEL_PROTOCOL;
+    packet.header.type = RTMP_TYPE_EDGE_SWITCH;
+    packet.payload = this.ipToBuffer(candidateEdges);
+    packet.header.length = packet.payload.length;
+    packet.header.stream_id = this.streamId;
+    let chunks = this.rtmpChunksCreate(packet);
+    this.socket.write(chunks);
+    this.socket.uncork();
+  }
+
+  ipToBuffer(candidateEdges) {
+    let buffer = Buffer.alloc(candidateEdges.length * 6);
+    let offset =0;
+    for (let [ip, port] of candidateEdges) {
+      ip.split('.').map((octet, index, array) => {
+        buffer.writeUInt8(parseInt(octet), offset + index);
+      });
+      buffer.writeUInt16BE(port, offset + 4);
+      offset += 6;
+    }
+    return buffer
+  }
+
+  BufferToIpString(candidateEdgesBuffer) {
+    let candidateEdges = [];
+    for(let i = 0; i < candidateEdgesBuffer.length; i += 6) {
+      let ip = candidateEdgesBuffer.slice(i,i + 4).map((octet, index, array) => {
+        return octet.toString();
+      }).reduce((prev, curr) => {
+        return prev + "." + curr;
+      });
+      let port = candidateEdgesBuffer.slice(i + 4, i + 6).readUInt16BE(0);
+      candidateEdges.push([ip, port]);
+    }
+    return candidateEdges
+  }
+
+  rtmpEdgeSwitchHandler() {
+    let payload = this.parserPacket.payload.slice(0, this.parserPacket.header.length);
+    let candidateEdges = this.BufferToIpString(payload);
+    this.launcher.emit("edge_change", candidateEdges);
+    console.log(research_utils.getTimestamp() + " "+ candidateEdges + "receive! -- client");
+  }
+
   rtmpSendSetBufferLength(bufferTime) {
     let packet = RtmpPacket.create();
     packet.header.fmt = RTMP_CHUNK_TYPE_0;
@@ -734,6 +843,7 @@ class NodeRtmpClient {
     packet.payload.writeUInt32BE(bufferTime, 6);
     let chunks = this.rtmpChunksCreate(packet);
     this.socket.write(chunks);
+    this.socket.uncork();
   }
 
   rtmpSendPublish() {
@@ -788,4 +898,4 @@ class NodeRtmpClient {
   }
 }
 
-module.exports = NodeRtmpClient
+module.exports = NodeRtmpClient;
