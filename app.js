@@ -11,9 +11,9 @@ const config = {
   http: {
     port: 8000,
     mediaroot: './media',
-    webroot: './www',
     allow_origin: '*'
   },
+
   https: {
     port: 8443,
     key: './privatekey.pem',
@@ -27,6 +27,7 @@ const config = {
     publish: false,
     secret: 'nodemedia2017privatekey'
   }
+
 };
 
 /*
@@ -45,6 +46,7 @@ const config = {
   }
 
  */
+
 
 let nms = new NodeMediaServer(config)
 nms.run();
