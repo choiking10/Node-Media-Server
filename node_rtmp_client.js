@@ -110,21 +110,10 @@ const RtmpPacket = {
   }
 };
 
-//secure
-//const secure_mode = true;
-const fs = require('fs');
-const tls = require('tls');
-const options = {
-	key: fs.readFileSync('./server.pem'),
-	cert: fs.readFileSync('./server.crt')
-	//ca: fs.readFileSync('./csr.pem', 'utf8')
-};
-
 class NodeRtmpClient {
-  constructor(rtmpUrl, connection_id="no_id", secure_mode = false) {
+  constructor(rtmpUrl, connection_id="no_id") {
     this.url = rtmpUrl;
     this.connection_id = connection_id;
-	this.secure_mode = secure_mode;
     this.info = this.rtmpUrlParser(rtmpUrl);
     this.isPublish = false;
     this.launcher = new EventEmitter();
@@ -240,10 +229,7 @@ class NodeRtmpClient {
   }
 
   _start() {
-	  if (this.secure_mode) {
-		  console.log("node_rtmp_client secure init " + this.connection_id);
-	  process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-	  this.socket = tls.connect(this.info.port, this.info.hostname, options, () => {
+    this.socket = Net.createConnection(this.info.port, this.info.hostname, () => {
       //rtmp handshark c0c1
       let c0c1 = Crypto.randomBytes(1537);
       c0c1.writeUInt8(3);
@@ -251,18 +237,7 @@ class NodeRtmpClient {
       c0c1.writeUInt32BE(0, 5);
       this.socket.write(c0c1);
       // Logger.debug('[rtmp client] write c0c1');
-    });}
-	else {
-		console.log("node_rtmp_client init " + this.connection_id);
-	this.socket = Net.createConnection(this.info.port, this.info.hostname, () => {
-	let c0c1 = Crypto.randomBytes(1537);
-	c0c1.writeUInt8(3);
-	c0c1.writeUInt32BE(Date.now() / 1000, 1);
-	c0c1.writeUInt32BE(0, 5);
-	this.socket.write(c0c1);
-	});}
-
-
+    });
     this.socket.on('data', this.onSocketData.bind(this));
     this.socket.on('error', this.onSocketError.bind(this));
     this.socket.on('close', this.onSocketClose.bind(this));

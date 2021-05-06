@@ -14,11 +14,10 @@ const EDGE_CHANGE_READY = 0;
 
 
 class NodeRtmpEdgeChangeClient {
-    constructor(rtmpUrl, connection_id="no_id", secure_mode = false) {
+    constructor(rtmpUrl, connection_id="no_id") {
         this.url = rtmpUrl;
         this.connection_id = connection_id;
-		this.secure_mode = secure_mode;
-        this.activeClient = new NodeRtmpClient(rtmpUrl, connection_id, secure_mode);
+        this.activeClient = new NodeRtmpClient(rtmpUrl, connection_id);
         this.nextEdgeClient = null;
         this.callback = {};
         this.directStart = false;
@@ -65,7 +64,7 @@ class NodeRtmpEdgeChangeClient {
         switch ((this.edge_change_strategy)) {
             case STRATEGY_AFTER_FIXED_TIME:
                 console.log("STRATEGY_AFTER_FIXED_TIME");
-                setTimeout(()=> _this.DoEdgeChange(), 1000);
+                setTimeout(()=> _this.DoEdgeChange(), 150);
                 break;
             case STRATEGY_HARD_HAND_OFF:
                 console.log("STRATEGY_HARD_HAND_OFF");

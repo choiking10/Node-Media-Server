@@ -9,13 +9,14 @@ if(LOCAL_TEST) {
     EDGE_JUPITER_IP = "127.0.0.1";
     EDGE_JUPITER_PORT = 1935;
 }
+
 const NodeRtmpEdgeChangeClient = require('./node_rtmp_edge_change_client');
 const stream_key = "wins2";
 
 
 async function run_pulling() {
     let pull_jupiter = new NodeRtmpEdgeChangeClient(
-        'rtmp://' + process.argv[2] + '/live/' + stream_key
+        'rtmp://' + EDGE_JUPITER_IP + '/live/' + stream_key
     );
     pull_jupiter.on('video', (videoData, timestamp) => {
 
@@ -23,15 +24,7 @@ async function run_pulling() {
     pull_jupiter.startPull();
 }
 
-async function run_multipolling() {
-	let number = parseInt(process.argv[3]);
-	for(let i = 0; i < number-1; i++) {
-        //run_pulling();
-		setTimeout(run_pulling, i * 100 + 1);
-	}
-}
-
-run_multipolling();
+setInterval(run_pulling, 2000);
 run_pulling();
 /*
 rtmp_polling_from_server_client.on('video', (videoData, timestamp) => {

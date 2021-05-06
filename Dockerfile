@@ -1,6 +1,4 @@
-FROM node:13.8.0-alpine3.11
-
-RUN apk add --no-cache ffmpeg
+FROM node:10.15.0-alpine
 
 WORKDIR /usr/src/app
 

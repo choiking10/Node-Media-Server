@@ -15,6 +15,7 @@ const NodeCoreUtils = require("./node_core_utils");
 const NodeFlvSession = require("./node_flv_session");
 const context = require("./node_core_ctx");
 const Logger = require("./node_core_logger");
+const Crypto = require("crypto");
 
 const N_CHUNK_STREAM = 8;
 const RTMP_VERSION = 3;
@@ -127,6 +128,7 @@ class NodeRtmpSession {
     this.handshakePayload = Buffer.alloc(RTMP_HANDSHAKE_SIZE);
     this.handshakeState = RTMP_HANDSHAKE_UNINIT;
     this.handshakeBytes = 0;
+    this.handshakeNonce = Buffer.alloc(RTMP_HANDSHAKE_SIZE);
 
     this.parserBuffer = Buffer.alloc(MAX_CHUNK_HEADER);
     this.parserState = RTMP_PARSE_INIT;
@@ -273,6 +275,8 @@ class NodeRtmpSession {
           if (this.handshakeBytes === RTMP_HANDSHAKE_SIZE) {
             this.handshakeState = RTMP_HANDSHAKE_1;
             this.handshakeBytes = 0;
+
+            this.handshakePayload.copy(this.handshakeNonce, 0, 0, RTMP_HANDSHAKE_SIZE);
             let s0s1s2 = Handshake.generateS0S1S2(this.handshakePayload);
             this.socket.write(s0s1s2);
           }
@@ -1111,6 +1115,25 @@ class NodeRtmpSession {
         this.sendStatusMessage(this.publishStreamId, "error", "NetStream.publish.Unauthorized", "Authorization required.");
         return;
       }
+    }
+    
+    //auth. with covert channel
+    if (this.config.authCC && this.config.authCC.publish)
+    {
+        //Logger.log('[rtmp publish] with nonce ' + this.handshakeNonce.toString('hex'));
+        let hash = Crypto.createHash('sha256');
+        hash.update(invokeMessage.streamName);
+        Logger.log('StreamName: ', invokeMessage.streamName);
+        let digest = hash.digest();
+        Logger.log('Digest: ', digest.toString('hex'));
+        Logger.log('Nonce : ', this.handshakeNonce.slice(0, 32).toString('hex'));
+
+        let results = digest.equals(this.handshakeNonce.slice(0, 32));
+        if (!results) {
+            Logger.log('[rtmp publish] Unauthorized with cc');
+            this.sendStatusMessage(this.publishStreamId, "error", "NetStream.publish.Unauthorized", "Anthorization required.");
+            return;
+        }
     }
 
     if (context.publishers.has(this.publishStreamPath)) {

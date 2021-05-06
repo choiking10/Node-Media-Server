@@ -1,20 +1,8 @@
 
 let LOCAL_TEST = false;
 
-let POLL_FROM_ME = "127.0.0.1";
 let EDGE_JUPITER_IP = "10.0.10.1";
-let EDGE_EARTH_IP = "10.0.20.1";
 let EDGE_JUPITER_PORT = 1935;
-let EDGE_EARTH_PORT = 1935;
-
-const changeAddr = [
-    [EDGE_EARTH_IP, EDGE_EARTH_PORT],
-    [EDGE_JUPITER_IP, EDGE_JUPITER_PORT]
-];
-
-let count = 0;
-
-
 
 
 if(LOCAL_TEST) {
@@ -29,11 +17,10 @@ const stream_key = "wins2";
 
 let pull_jupiter = new NodeRtmpEdgeChangeClient(
     'rtmp://' + EDGE_JUPITER_IP + '/live/' + stream_key,
-    "black",
-    true
-);//tls
+    "black"
+);
 
-let push_jupiter = new NodeRtmpEdgeChangeClient('rtmp://127.0.0.1/live/wins3');
+let push_jupiter = new NodeRtmpEdgeChangeClient('rtmp://' + EDGE_JUPITER_IP + '/live/wins3');
 // rtmp://143.248.55.86:31935/live/wins
 
 //let rtmp_pushing_to_server_client = new NodeRtmpClient('rtmp://' + push_addr + '/live/' + stream_key);
@@ -47,8 +34,7 @@ let push_jupiter = new NodeRtmpEdgeChangeClient('rtmp://127.0.0.1/live/wins3');
 * rtmp_polling_from_server_client
 * */
 
-let bef = 0;
-let flag = true;
+
 
 async function run_pulling(pulling_client) {
 
@@ -67,7 +53,7 @@ async function run_pulling(pulling_client) {
         let frame_type = (videoData[0] >> 4) & 0x0f;
         let codec_id = videoData[0] & 0x0f;
 
-        if(!(frame_type == 1 && videoData[1] == 0 && codec_id == 7)){
+        if(!(frame_type == 1 && videoData[1] ==0 && codec_id == 7)){
             research_utils.appendLogForMessage(
                 pulling_client.connection_id,
                 pulling_client.activeClient.url,
@@ -77,16 +63,11 @@ async function run_pulling(pulling_client) {
                 research_utils.getTimestampMicro(),
                 (videoData[0] >> 4) & 0x0f
             );
-       }
-      /*
-        console.log(research_utils.getTimestamp() + " " +
-             pulling_client.connection_id + " I receive video (" + timestamp + ")")
-      */  
-        if(timestamp == 0) {
-               console.log("time stamp is 0");
         }
- 
-        bef = timestamp;
+
+
+        //console.log(research_utils.getTimestamp() + " " +
+        //   pulling_client.connection_id + " I receive video (" + timestamp + ")")
         push_jupiter.pushVideo(videoData, timestamp);
     });
 
